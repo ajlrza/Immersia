@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* surfaces */
+  --ink: #0a0a10;
+  --panel: #131320;
+  --panel-2: #181726;
+  --inset: #0d0d14;
+  --raised: #1b1a29;
+
+  /* borders */
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-hairline: rgba(255, 255, 255, 0.06);
+
+  /* text */
+  --text: #c7c4d6;
+  --text-h: #f5f3fb;
+  --text-dim: #726e88;
+  --text-faint: #4c4960;
+
+  /* signature duality */
+  --observed: #2fd6b8;
+  --observed-soft: rgba(47, 214, 184, 0.12);
+  --observed-border: rgba(47, 214, 184, 0.4);
+
+  --predicted: #aa3bff;
+  --predicted-soft: rgba(170, 59, 255, 0.14);
+  --predicted-border: rgba(170, 59, 255, 0.45);
+
+  /* status */
+  --amber: #f5a623;
+  --amber-soft: rgba(245, 166, 35, 0.14);
+  --danger: #ff5470;
+
+  /* legacy aliases (kept so nothing else in the app breaks) */
+  --bg: var(--ink);
+  --accent: var(--predicted);
+  --accent-bg: var(--predicted-soft);
+  --accent-border: var(--predicted-border);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 24px 48px -16px rgba(0, 0, 0, 0.6);
+  --glow-predicted: 0 0 0 1px var(--predicted-border), 0 0 32px -8px rgba(170, 59, 255, 0.35);
+  --glow-observed: 0 0 0 1px var(--observed-border), 0 0 32px -8px rgba(47, 214, 184, 0.3);
+
+  --display: 'Space Grotesk', var(--sans);
+  --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+
+  font: 15px/1.5 var(--sans);
+  letter-spacing: 0.01em;
+  color-scheme: dark;
+  color: var(--text);
+  background: var(--ink);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(170, 59, 255, 0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(47, 214, 184, 0.05), transparent 55%),
+    var(--ink);
+}
+
+::selection {
+  background: var(--predicted-soft);
+  color: var(--text-h);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+  border: 2px solid var(--ink);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+}
+
+button,
+input {
+  font-family: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--predicted);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
