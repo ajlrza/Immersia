@@ -36,11 +36,18 @@ function processDataWithSwitch(data: data_object) {
     }
 }
 
+export interface worldStorage {
+  "avatarData": number // User ID,
+  "generalState": number // hashing,
+  "positionState": number // hashing,
+  "worldState": number // hashing
+}
 
 class DataFactory {
   table: any;
   dbConn: IDBOpenDBRequest;
   db: any;
+  storeWorld: worldStorage
 
   readonly pglite_readsql_map = {
     "SELECT": "SELECT"
@@ -50,9 +57,10 @@ class DataFactory {
     this.dbConn = dbConn;
   }
 
-  writeSQL(table?: any, column?: any) {
+  writeSQL(storeWorld: worldStorage, table?: any, column?: any) {
     let isForTable = false;
     let isForColumn = false;
+    this.storeWorld = storeWorld;
 
     const pglite_writesql_map = {
 
@@ -79,9 +87,10 @@ class DataFactory {
     }
   }
 
-  readSQL(table?: any, column?: any) {
+  readSQL(storeWorld: worldStorage, table?: any, column?: any) {
     let isForTable = false;
     let isForColumn = false;
+    this.storeWorld = storeWorld;
 
     const pglite_writesql_map = {
 
@@ -109,13 +118,13 @@ class DataFactory {
   }
 }
 
-const pgTranslate = new PGFactory(dbRequest);
+const pgTranslate = new DataFactory(dbRequest);
 pgTranslate.dbConn = dbRequest;
 
 pgTranslate.dbConn.onupgradeneeded = (event) => {
   pgTranslate.db = (event.target as IDBOpenDBRequest).result;
 
-  for (const [tableName, tableValue] of Object.entries(state_fn_map)) {
+  for (const [tableName, tableValue] of Object.entries(db.worldStorage)) {
     console.log(`Table Name: ${tableName}`);
     console.log(`Table Value:`, tableValue);
 
