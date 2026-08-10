@@ -78,7 +78,6 @@ const MAX_STEP = 4;
 
 function App() {
   const [selectedAction, setSelectedAction] = useState('click');
-  const [activeObs, setActiveObs] = useState({ dom: true, a11y: false, bbox: false });
   const [step, setStep] = useState(0);
 
   const handleReset = () => {
@@ -88,12 +87,8 @@ function App() {
 
   const handleExecute = () => setStep((s) => Math.min(s + 1, MAX_STEP));
 
-  const toggleObs = (id) => setActiveObs((prev) => ({ ...prev, [id]: !prev[id] }));
-  const isRunning = step > 0;
-
   return (
     <div className="app-shell">
-      {/* ── Header ── */}
       <header className="header-bar">
         <div className="brand-group">
           <div className="brand-mark">
@@ -136,9 +131,7 @@ function App() {
         </div>
       </header>
 
-      {/* ── Main layout ── */}
       <div className="main-layout">
-        {/* Sidebar: Action Space */}
         <aside className="sidebar">
           <div className="section-header">
             <span className="eyebrow">Agent controls</span>
@@ -200,7 +193,6 @@ function App() {
           </div>
         </aside>
 
-        {/* Center: Canvas */}
         <main className="canvas-area">
           <div className="canvas-wrapper">
             <div className="canvas-chrome">
@@ -215,7 +207,6 @@ function App() {
             </div>
 
             <div className="sim-page">
-              {/* Navbar */}
               <div className="sim-navbar">
                 <div className="sim-nav-links">
                   <div className="sim-box dark" style={{ width: 96, height: 16 }} />
@@ -232,7 +223,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Hero */}
               <div className="sim-hero">
                 <div
                   className="sim-box"
@@ -250,7 +240,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Features */}
               <div className="sim-cards">
                 <div className="sim-box" style={{ width: 160, height: 16, margin: '0 auto 32px' }} />
                 <div className="sim-grid">
@@ -268,7 +257,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Table */}
               <div className="sim-table-wrap">
                 <div className="sim-table">
                   <div className="sim-table-header">
@@ -298,7 +286,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Predicted State Badge */}
               <div className="predicted-badge">
                 <div className="predicted-badge-inner">
                   <span className="ping-wrapper">
@@ -313,7 +300,6 @@ function App() {
         </main>
       </div>
 
-      {/* ── Trajectory ── */}
       <div className="trajectory-panel">
         <div className="timeline">
           <span className="timeline-label eyebrow">Trajectory</span>

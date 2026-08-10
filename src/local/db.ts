@@ -44,10 +44,9 @@ export interface worldStorage {
 }
 
 class DataFactory {
-  table: any;
   dbConn: IDBOpenDBRequest;
-  db: any;
-  storeWorld: worldStorage
+  db: any | object | undefined;
+  storeWorld: worldStorage | undefined;
 
   readonly pglite_readsql_map = {
     "SELECT": "SELECT"
@@ -57,7 +56,7 @@ class DataFactory {
     this.dbConn = dbConn;
   }
 
-  writeSQL(storeWorld: worldStorage, table?: any, column?: any) {
+  writeSQL(storeWorld: worldStorage, table?: string | undefined, column?: string | undefined) {
     let isForTable = false;
     let isForColumn = false;
     this.storeWorld = storeWorld;
@@ -85,9 +84,10 @@ class DataFactory {
     if (table && column) {
       return;
     }
+
   }
 
-  readSQL(storeWorld: worldStorage, table?: any, column?: any) {
+  readSQL(storeWorld: worldStorage, table?: string | undefined, column?: string | undefined) {
     let isForTable = false;
     let isForColumn = false;
     this.storeWorld = storeWorld;
@@ -133,10 +133,9 @@ pgTranslate.dbConn.onupgradeneeded = (event) => {
       continue;
     } 
     else {
-      const tableKey = tableName as TableMapKey;
-      const tableTarget = getTableData(tableKey);
+      const tableTarget = processDataWithSwitch(tableName);
 
-      const columns = getTableColumns(tableTarget);
+      const columns = processDataWithSwitch(tableTarget);
       const columnNames = Object(columns);
 
       const objectStore = db.createObjectStore(tableName, {
