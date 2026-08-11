@@ -1,4 +1,5 @@
 import type { generalState, avatarState, avatarPositionState, worldState } from "@/src/src/types/state_types.js"
+import { dataHashing } from '@/src/src/engine/engine_request.ts'
 
 const dbRequest = indexedDB.open("Database", 1);
 
@@ -37,10 +38,10 @@ function processDataWithSwitch(data: data_object) {
 }
 
 export interface worldStorage {
-  "avatarData": number // User ID,
-  "generalState": number // hashing,
-  "positionState": number // hashing,
-  "worldState": number // hashing
+  "avatarData": number | dataHashing // User ID,
+  "generalState": number | dataHashing // hashing,
+  "positionState": number | dataHashing // hashing,
+  "worldState": number | dataHashing // hashing
 }
 
 class DataFactory {
