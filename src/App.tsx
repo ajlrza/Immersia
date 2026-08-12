@@ -1,10 +1,15 @@
 import { useState } from 'react';
-import { startRender, resetCanvas} from './services/render.js';
+import { startRender, resetCanvas } from './services/render.js';
 import './App.css';
 
 const ICON_STROKE = 1.75;
 
-function Icon({ path, size = 16 }) {
+interface IconProps {
+  path: string;
+  size?: number;
+}
+
+function Icon({ path, size = 16 }: IconProps) {
   return (
     <svg
       width={size}
@@ -33,9 +38,25 @@ const ICON_PATHS = {
   monitor: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   home: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
   world: 'M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z',
-};
+} as const;
 
-const ACTIONS = [
+interface ActionField {
+  key: string;
+  label: string | null;
+  placeholder: string;
+  full?: boolean;
+}
+
+interface ActionDef {
+  id: string;
+  label: string;
+  shortcut: string;
+  color: 'violet' | 'teal';
+  icon: string;
+  fields: ActionField[];
+}
+
+const ACTIONS: ActionDef[] = [
   {
     id: 'click',
     label: 'Click Element',
@@ -68,7 +89,13 @@ const ACTIONS = [
   },
 ];
 
-const OBSERVATIONS = [
+interface ObservationDef {
+  id: 'dom' | 'a11y' | 'bbox';
+  label: string;
+  dot: 'emerald' | 'default' | 'indigo';
+}
+
+const OBSERVATIONS: ObservationDef[] = [
   { id: 'dom', label: 'View DOM Tree', dot: 'emerald' },
   { id: 'a11y', label: 'View A11y Tree', dot: 'default' },
   { id: 'bbox', label: 'Bounding Boxes', dot: 'indigo' },
@@ -76,19 +103,28 @@ const OBSERVATIONS = [
 
 const MAX_STEP = 4;
 
+type ObsState = Record<ObservationDef['id'], boolean>;
+
 function App() {
-  const [selectedAction, setSelectedAction] = useState('click');
-  const [step, setStep] = useState(0);
+  const [selectedAction, setSelectedAction] = useState<string>('click');
+  const [activeObs, setActiveObs] = useState<ObsState>({ dom: true, a11y: false, bbox: false });
+  const [step, setStep] = useState<number>(0);
 
   const handleReset = () => {
-      resetCanvas();
-      setStep(0);
-    };
+    resetCanvas();
+    setStep(0);
+  };
 
   const handleExecute = () => setStep((s) => Math.min(s + 1, MAX_STEP));
 
+  const toggleObs = (id: ObservationDef['id']) =>
+    setActiveObs((prev) => ({ ...prev, [id]: !prev[id] }));
+
+  const isRunning = step > 0;
+
   return (
     <div className="app-shell">
+      {/* ── Header ── */}
       <header className="header-bar">
         <div className="brand-group">
           <div className="brand-mark">
@@ -131,7 +167,9 @@ function App() {
         </div>
       </header>
 
+      {/* ── Main layout ── */}
       <div className="main-layout">
+        {/* Sidebar: Action Space */}
         <aside className="sidebar">
           <div className="section-header">
             <span className="eyebrow">Agent controls</span>
@@ -193,6 +231,7 @@ function App() {
           </div>
         </aside>
 
+        {/* Center: Canvas */}
         <main className="canvas-area">
           <div className="canvas-wrapper">
             <div className="canvas-chrome">
@@ -207,6 +246,7 @@ function App() {
             </div>
 
             <div className="sim-page">
+              {/* Navbar */}
               <div className="sim-navbar">
                 <div className="sim-nav-links">
                   <div className="sim-box dark" style={{ width: 96, height: 16 }} />
@@ -223,6 +263,7 @@ function App() {
                 </div>
               </div>
 
+              {/* Hero */}
               <div className="sim-hero">
                 <div
                   className="sim-box"
@@ -240,6 +281,7 @@ function App() {
                 </div>
               </div>
 
+              {/* Features */}
               <div className="sim-cards">
                 <div className="sim-box" style={{ width: 160, height: 16, margin: '0 auto 32px' }} />
                 <div className="sim-grid">
@@ -257,6 +299,7 @@ function App() {
                 </div>
               </div>
 
+              {/* Table */}
               <div className="sim-table-wrap">
                 <div className="sim-table">
                   <div className="sim-table-header">
@@ -286,6 +329,7 @@ function App() {
                 </div>
               </div>
 
+              {/* Predicted State Badge */}
               <div className="predicted-badge">
                 <div className="predicted-badge-inner">
                   <span className="ping-wrapper">
@@ -300,6 +344,7 @@ function App() {
         </main>
       </div>
 
+      {/* ── Trajectory ── */}
       <div className="trajectory-panel">
         <div className="timeline">
           <span className="timeline-label eyebrow">Trajectory</span>
@@ -319,11 +364,9 @@ function App() {
             return (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 {reached ? (
-                  <>
-                    <div className="node-active">
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }}>s{i}</span>
-                    </div>
-                  </>
+                  <div className="node-active">
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 600 }}>s{i}</span>
+                  </div>
                 ) : (
                   <div className="node-empty">
                     <span>s{i}</span>

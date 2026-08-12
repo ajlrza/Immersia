@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router';
+import * as Engine from './services/engine_request'
 import './LandingPage.css';
 
 const ICON_STROKE = 1.75;
@@ -65,31 +67,51 @@ const HINTS = [
 
 
 function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.SubmitEvent<HTMLFormElement>): Boolean {
-  
-   event.preventDefault();
 
+  event.preventDefault();
   // Check if anything was sent
-  const eventWhen: any | undefined = event.timeStamp || event.type;
+  const eventMetadata: any | undefined = event.timeStamp || event.type;
   const submittedPrompt: string | undefined = event.currentTarget.innerText;
+  let dateNow = new Date()
+
+  let metadataPayload: object = {
+      "Timestamp": eventMetadata
+  };
+
+  const invalidPrompts: object = {
+    "": true,
+    "undefined": true
+  }
+
+  const spaceExtract = submittedPrompt.match("") ?? "undefined";
+
+  if (typeof spaceExtract === "undefined" && invalidPrompts[spaceExtract]) {
+      console.log("Possible gibberish prompt detected")
+      return false
+  }
+
+  if (submittedPrompt == "" && invalidPrompts[""]) {
+      console.log("No prompt detected")
+      return false
+  }
 
   // Filter if no click, assume it was enter
 
-  if (typeof eventWhen === undefined && submittedPrompt != undefined) {
+  if (typeof eventMetadata === "undefined" && submittedPrompt != "undefined") {
       console.log("Submitted but no event recorded")
-      let dateNow = new Date();
-      let eventDate = dateNow.getDate;
-      let eventTime = dateNow.getTime;
-  }
-  try {
-    let submitPrompt = fetch('https://immersia.backend.com').then(
-      response => {
-        if (!response.ok) throw new Error(response.statusText);
-        return response.json();
+      
+      metadataPayload = {
+        "Date": dateNow.getDate,
+        "Time": dateNow.getTime
       }
-    )
-  } catch {
-    console.log("Error")
   }
+
+  if (typeof submittedPrompt === undefined) {
+    alert("No prompt detected");
+    return false;
+  }
+
+  const engineRequest = Engine.processPromptWorld({"metadata": metadataPayload, "prompt": submittedPrompt})
 
   return true;
 
@@ -100,9 +122,24 @@ function LandingPage() {
   const [prompt, setPrompt] = useState('');
   const [sessionStarted, startSession] = useState(false);
 
-  if (sessionStarted) {
-    return true;
+  if (sessionStarted === true) {
+
+    const sessionID = Math.floor(Math.random() * 10)
+    document.cookie = `Cookie=${sessionID}; path=/;`;
+
   }
+
+  let navigate = useNavigate();
+
+  useEffect(() => {
+
+    if (sessionStarted) {
+      const sessionID = Math.floor(Math.random() * 10);
+      document.cookie = `Cookie=${sessionID}; path=/;`;
+
+      navigate("/home");
+    }
+  }, [sessionStarted, navigate]);
 
   return (
     <div className="landing">
@@ -186,7 +223,7 @@ function LandingPage() {
                   </div>
                 ))}
               </div>
-              <button onClick={(event) => {initiateProcess(event)}} className="run-btn">
+              <button type="submit" className="run-btn">
                 <Icon path={ICON_PATHS.play} size={14} />
                 Start
               </button>
