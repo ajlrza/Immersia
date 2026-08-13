@@ -1,7 +1,9 @@
 from fastapi import FastAPI, WebSocket
+from kafka import KafkaConsumer
 
 app = FastAPI()
 socket = WebSocket()
+consumer = KafkaConsumer()
 
 @app.get("/")
 def read_root():
@@ -12,3 +14,11 @@ def read_root():
 async def health_check():
     return {"status": "healthy"}
 
+@app.get("/engine", tags=["Engine"])
+async def route_payloads():
+
+    observance_one = {}
+    observance_two = {}
+    observance_three = {}
+
+    consumer.assign([observance_one, observance_two, observance_three])
