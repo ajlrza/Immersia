@@ -5,7 +5,7 @@ import './LandingPage.css';
 
 const ICON_STROKE = 1.75;
 
-function Icon({ path, size = 16 }) {
+function Icon({ path = "", size = 16 }) {
   return (
     <svg
       width={size}
@@ -71,7 +71,11 @@ function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> 
   event.preventDefault();
   // Check if anything was sent
   const eventMetadata: any | undefined = event.timeStamp || event.type;
-  const submittedPrompt: string | undefined = event.currentTarget.innerText;
+
+  const formEl = event.target as HTMLFormElement;
+  const submittedPrompt = formEl.elements.namedItem('prompt-field') as HTMLTextAreaElement;
+  const submittedAPIKey = formEl.elements.namedItem('api-field') as HTMLTextAreaElement;
+
   let dateNow = new Date()
 
   let metadataPayload: object = {
@@ -111,7 +115,7 @@ function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> 
     return false;
   }
 
-  const engineRequest = Engine.processPromptWorld({"metadata": metadataPayload, "prompt": submittedPrompt})
+  const engineRequest = Engine.processPromptWorld({"metadata": metadataPayload, "prompt": submittedPrompt, "model": submittedAPIKey})
 
   return true;
 
@@ -208,6 +212,13 @@ function LandingPage() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
               />
+            </div>
+
+            <div className="api-box">
+              <textarea
+                className="api-box-field"
+                rows={1}
+                placeholder="Enter your API key here"/>
             </div>
 
             <div className="prompt-footer">

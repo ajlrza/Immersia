@@ -1,6 +1,6 @@
-import type { actionList, userAction, spriteProperties, loadEngineAPIKey, createEngineRequest } from '../interfaces/engine_interfaces'
+import type { actionList, userAction, spriteProperties, loadEngineAPIKey, enginePayload } from '../interfaces/engine_interfaces'
 
-const action: userAction
+var action: userAction;
 
 interface clientPayload {
     metadata: object,
@@ -17,20 +17,28 @@ const inMemoryBuffer: object = {
     stateProcess: Array,
 };
 
-export function sendEngineRequest(payload: object): void {
-    action.actionMade = payload.Action // javascript when an event triggered
-    action.avatarState = payload.Avatar // already established, filled object in the frontendclient?
-    action.generalState = payload.State // general
-    action.worldState = payload.World
+export function sendEngineRequest(payload: enginePayload): void {
+    action.actionMade = payload.userAction.actionMade // javascript when an event triggered
+    action.avatarState = payload.userAction.avatarState // already established, filled object in the frontendclient?
+    action.generalState = payload.userAction.generalState // general
+    action.worldState = payload.userAction.worldState
 };
 
 export function processPromptWorld(payload: clientPayload): any {
 
     const ws: WebSocket = new WebSocket("https://www.immersia.backend.cloudflare.com");
-    ws.OPEN
-    ws.send(payload.prompt)
+    let response;
 
-    return ws.onmessage;
+    if (ws.readyState == 1) {
+        ws.send(payload.prompt)
+    } else {
+        console.error("Websocket not ready.")
+    }
+
+    response = ws.onmessage ?? "";
+    ws.close()
+
+    return response;
 
 }
 
