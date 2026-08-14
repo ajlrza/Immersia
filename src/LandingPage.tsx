@@ -30,6 +30,8 @@ const ICON_PATHS = {
   cpu: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
   monitor: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   scroll: 'M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4',
+  eye: 'M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zM12 16.5a4.5 4.5 0 110-9 4.5 4.5 0 010 9z',
+  eyeOff: 'M3 3l18 18M10.6 10.6a2.25 2.25 0 003.18 3.18M9.88 4.68A10.6 10.6 0 0112 4.5c5 0 9.27 3.11 11 7.5a13.2 13.2 0 01-3.29 4.61M6.3 6.3A13.2 13.2 0 001 12c1.05 2.66 3 4.85 5.44 6.2',
 };
 
 const MODES = [
@@ -99,8 +101,6 @@ function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> 
       return false
   }
 
-  // Filter if no click, assume it was enter
-
   if (typeof eventMetadata === "undefined" && submittedPrompt != "undefined") {
       console.log("Submitted but no event recorded")
       
@@ -125,6 +125,7 @@ function LandingPage() {
   const [activeMode, setActiveMode] = useState('interact');
   const [prompt, setPrompt] = useState('');
   const [sessionStarted, startSession] = useState(false);
+  const [showKey, setShowKey] = useState(false);
 
   if (sessionStarted === true) {
 
@@ -168,6 +169,18 @@ function LandingPage() {
             Launch console
           </button>
         </nav>
+
+        <div className="hero-img-one">
+          <image>
+            <img src="https://i.pinimg.com/736x/f2/a8/84/f2a8840d1eaebef65a3d86ad573aaf26.jpg"></img>
+          </image>
+        </div>
+
+        <div className="hero-img-two">
+          <image>
+            <img src="https://i.ytimg.com/vi/M1VWSk7xrQU/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLA0HVlTiRX5wubkBInZXWcrr5zcNg"></img>
+          </image>
+        </div>
 
         <section className="landing-hero">
           <div className="landing-eyebrow">
@@ -214,12 +227,30 @@ function LandingPage() {
               />
             </div>
 
-            <div className="api-box">
-              <textarea
-                className="api-box-field"
-                rows={1}
-                placeholder="Enter your API key here"/>
-            </div>
+            <label className="key-row" htmlFor="api-field">
+              <span className="key-row-icon">
+                <Icon path={ICON_PATHS.lock} size={14} />
+              </span>
+              <span className="key-row-label">API Key</span>
+              <input
+                id="api-field"
+                name="api-field"
+                type={showKey ? 'text' : 'password'}
+                className="key-input"
+                placeholder=""
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className="key-toggle"
+                onClick={() => setShowKey((v) => !v)}
+                aria-label={showKey ? 'Hide API key' : 'Show API key'}
+              >
+                <Icon path={showKey ? ICON_PATHS.eyeOff : ICON_PATHS.eye} size={14} />
+              </button>
+              <span className="key-badge">BYOK</span>
+            </label>
 
             <div className="prompt-footer">
               <div className="mode-chips">
