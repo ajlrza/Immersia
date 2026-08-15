@@ -2,16 +2,6 @@ import type { actionList, userAction, spriteProperties, loadEngineAPIKey, engine
 
 var action: userAction;
 
-interface clientPayload {
-    metadata: object,
-    prompt: string
-}
-
-export interface dataHashing {
-   hashedObject: any,
-   hashString: string // random
-}
-
 const inMemoryBuffer: object = {
     rendering: Uint8Array, 
     stateProcess: Array,

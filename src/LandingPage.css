@@ -33,7 +33,6 @@
   position: fixed;
   right: 50%;
   z-index: 0;
-  /* placeholder wash — replace with a real background-image if you have one */
   filter: blur(10px);
   transform: scale(0.8);
 }

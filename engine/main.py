@@ -17,6 +17,15 @@ async def health_check():
 @app.get("/engine", tags=["Engine"])
 async def route_payloads():
 
+    payload_priority = {
+        "OBSERVED": 1,
+        "UNOBSERVED": 0
+    }
+
+    hardware_priority = {
+        "freeMem": 
+    }
+
     observance_one = {}
     observance_two = {}
     observance_three = {}

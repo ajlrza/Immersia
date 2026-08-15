@@ -9,6 +9,16 @@ export interface enginePayload {
     World: worldState
 }
 
+export interface clientPayload {
+    metadata: object,
+    prompt: string
+}
+
+export interface dataHashing {
+   hashedObject: any,
+   hashString: string // random
+}
+
 export interface actionList {
     isTouched: boolean,
     isMoved: boolean,
