@@ -41,6 +41,17 @@ app.get('/engine', async function handler(request, reply) {
     processed_data: request.body.content.data ?? undefined 
   }
 
+  const response = await fetch('https://immersia_service.com/engine', {
+    method: 'POST',
+    headers: {
+      'User-Agent': 'undici-stream-example',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(perfPayload),
+  });
+    const data = await response.json();
+    console.log(data);
+
 })
 
 
