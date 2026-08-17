@@ -1,7 +1,10 @@
 import * as os from 'os';
 import dotenv from 'dotenv';
 import Fastify from 'fastify';
+import * as process from 'node:process';
+import * as perfMonitor from '../server/services/perf_monitor'
 import * as engineInterface from '../src/interfaces/engine_interfaces'
+
 
 dotenv.config();
 
@@ -15,20 +18,6 @@ app.get('/api_check', async function handler (request, reply) {
 
 app.get('/engine', async function handler(request, reply) {
 
-  const totalMemory = os.totalmem();
-  const freeMemory = os.freemem();
-  const usedMemory = totalMemory - freeMemory;
-
-  const memoryUsagePercentage: number = (usedMemory / totalMemory) * 100;
-
-  if (memoryUsagePercentage >= 85) {
-    console.warn(`🚨 DANGER: Memory usage is at ${memoryUsagePercentage.toFixed(2)}%! System may experience severe slowdowns.`);
-  } else if (memoryUsagePercentage >= 70) {
-      console.log(`⚠️ WARNING: High memory usage (${memoryUsagePercentage.toFixed(2)}%).`);
-  } else {
-      console.log(`✅ Healthy: Memory usage is at ${memoryUsagePercentage.toFixed(2)}%.`);
-  }
-
   const enginePayload: engineInterface.enginePayload = {
     username: request.body.content.username ?? undefined,
     userAction: request.body.content.action ?? undefined,
@@ -38,7 +27,7 @@ app.get('/engine', async function handler(request, reply) {
   const perfPayload: object = {
     engine: enginePayload ?? undefined,
     resource_used: memoryUsagePercentage ?? undefined,
-    processed_data: request.body.content.data ?? undefined 
+    processed_data: request.body.content.data ?? undefined,
   }
 
   const response = await fetch('https://immersia_service.com/engine', {
@@ -49,15 +38,35 @@ app.get('/engine', async function handler(request, reply) {
     },
     body: JSON.stringify(perfPayload),
   });
-    const data = await response.json();
-    console.log(data);
+
+  const data = await response.json();
+  console.log(data);
+
+  const totalMemory = os.totalmem();
+  const freeMemory = os.freemem();
+  const usedMemory = totalMemory - freeMemory;
+
+  const memoryUsagePercentage: number = (usedMemory / totalMemory) * 100;
+
+  if (memoryUsagePercentage >= 85) {
+    console.warn(`🚨 DANGER: Memory usage is at ${memoryUsagePercentage.toFixed(2)}%! System may experience severe slowdowns.`)
+    perfPayload["cpuStats"] = perfMonitor.getCPUStats("extreme")
+
+  } else if (memoryUsagePercentage >= 70) {
+      console.log(`⚠️ WARNING: High memory usage (${memoryUsagePercentage.toFixed(2)}%).`);
+      perfPayload["cpuStats"] = perfMonitor.getCPUStats("bad")
+
+  } else {
+      console.log(`✅ Healthy: Memory usage is at ${memoryUsagePercentage.toFixed(2)}%.`);
+      perfPayload["cpuStats"] = perfMonitor.getCPUStats("normal")
+  }
 
 })
-
 
 try {
   await app.listen({ port: 3000 })
 } catch (err) {
+  // need a fallback here
   app.log.error(err)
   process.exit(1)
 }
