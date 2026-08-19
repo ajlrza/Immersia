@@ -3,9 +3,12 @@ from huggingface_hub import HfApi
 from huggingface_hub import login
 import GoogleGenAI from '@google/genai';
 
-def api_call(doRender: boolean = False, states: object, api_key: string):
+async def api_call(states: object, api_key: str, doRender: bool = False):
   sdk_api: object
   hf_api: object
+
+  if (doRender):
+    image: bytearray = []
   
   try:
     sdk_api = GoogleGenAI(api_key)
