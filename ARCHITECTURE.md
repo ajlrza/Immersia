@@ -1,4 +1,4 @@
-* Transparency: These are AI-generated diagrams in mermaidJS, however for the lucidchart version made by me, you may refer to /assets/architecture.png
+* Transparency: These are AI-generated diagrams in mermaidJS, however for the lucidchart version made by me, you may refer to /assets/
 
 ## PRE-PROCESSING ARCHITECTURE
 ```mermaid
