@@ -68,9 +68,10 @@ const HINTS = [
 ];
 
 
-function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.SubmitEvent<HTMLFormElement>): Boolean {
+function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.SubmitEvent<HTMLFormElement>): any {
 
   event.preventDefault();
+
   // Check if anything was sent
   const eventMetadata: any | undefined = event.timeStamp || event.type;
 
@@ -80,28 +81,30 @@ function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> 
 
   let dateNow = new Date()
 
-  let metadataPayload: object = {
+  // Generic Interface
+  let metadataPayload: Record<string, any> = {
       "Timestamp": eventMetadata
   };
 
-  const invalidPrompts: object = {
+  // Generic interface
+  const invalidPrompts: Record<string, boolean> = {
     "": true,
     "undefined": true
   }
 
-  const spaceExtract = submittedPrompt.match("") ?? "undefined";
+  const spaceExtract = submittedPrompt.innerText.match("") ?? "undefined";
 
-  if (typeof spaceExtract === "undefined" && invalidPrompts[spaceExtract]) {
+  if (typeof spaceExtract === "undefined" && invalidPrompts[`${spaceExtract}`]) {
       console.log("Possible gibberish prompt detected")
       return false
   }
 
-  if (submittedPrompt == "" && invalidPrompts[""]) {
+  if (submittedPrompt.innerText == "" && invalidPrompts[submittedPrompt.innerText]) {
       console.log("No prompt detected")
       return false
   }
 
-  if (typeof eventMetadata === "undefined" && submittedPrompt != "undefined") {
+  if (typeof eventMetadata === "undefined" && submittedPrompt.innerText != "undefined") {
       console.log("Submitted but no event recorded")
       
       metadataPayload = {
@@ -117,7 +120,7 @@ function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> 
 
   const engineRequest = Engine.processPromptWorld({"metadata": metadataPayload, "prompt": submittedPrompt, "model": submittedAPIKey})
 
-  return true;
+  return engineRequest;
 
 }
 
