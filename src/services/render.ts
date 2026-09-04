@@ -1,3 +1,9 @@
+
+export function renderOptimize(bytes: Uint8Array): Uint8Array {
+
+    return bytes;
+};
+
 export function startRender(): Uint8Array {
     const buffer = new ArrayBuffer(8); 
     const bytes = new Uint8Array(buffer);
@@ -9,3 +15,4 @@ export function resetCanvas(): Uint8Array {
     const bytes = new Uint8Array(buffer);
     return bytes;
 }
+

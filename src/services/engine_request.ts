@@ -1,32 +1,55 @@
-import type { actionList, userAction, spriteProperties, loadEngineAPIKey, enginePayload } from '../interfaces/engine_interfaces'
-
-var action: userAction;
+import type { spriteProperties, loadEngineAPIKey, clientPayload, enginePayload } from '../interfaces/engine_interfaces'
 
 const inMemoryBuffer: object = {
     rendering: Uint8Array, 
     stateProcess: Array,
 };
 
-export function sendEngineRequest(payload: enginePayload): void {
-    action.actionMade = payload.userAction.actionMade // javascript when an event triggered
-    action.avatarState = payload.userAction.avatarState // already established, filled object in the frontendclient?
-    action.generalState = payload.userAction.generalState // general
-    action.worldState = payload.userAction.worldState
-};
+export function sendEngineRequest(payload: enginePayload): any {
 
-export function processPromptWorld(payload: clientPayload): any {
+    const userStates: string = `Action: ${payload.Action}, Avatar: ${payload.Avatar}, State: ${payload.State}, World: ${payload.World}`
 
-    const ws: WebSocket = new WebSocket("https://www.immersia.backend.cloudflare.com");
+    const socket: WebSocket = new WebSocket("https://www.immersia");
     let response;
 
-    if (ws.readyState == 1) {
-        ws.send(payload.prompt)
+    socket.addEventListener("message", (event) => {
+        if (event.data) {
+            response = event.data
+        }
+    })
+
+    if (socket.readyState == 1) {
+        socket.send(userStates)
     } else {
         console.error("Websocket not ready.")
     }
 
-    response = ws.onmessage ?? "";
-    ws.close()
+    socket.close()
+
+    return response;
+
+};
+
+export function processPromptWorld(payload: clientPayload, key: string, model: string): any {
+
+    const clientPrompt: string = `Prompt: ${payload.prompt}, Metadata: ${payload.metadata}, Key: ${key}, Model: ${model}`
+
+    const socket: WebSocket = new WebSocket("https://www.immersia");
+    let response;
+
+    socket.addEventListener("message", (event) => {
+        if (event.data) {
+            response = event.data
+        }
+    })
+
+    if (socket.readyState == 1) {
+        socket.send(clientPrompt)
+    } else {
+        console.error("Websocket not ready.")
+    }
+
+    socket.close()
 
     return response;
 

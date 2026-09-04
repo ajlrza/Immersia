@@ -71,51 +71,40 @@ const HINTS = [
 function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.SubmitEvent<HTMLFormElement>): boolean | Record<string, boolean | object> {
 
   event.preventDefault();
+  let dateNow = new Date()
+
 
   // Check if anything was sent
   const eventMetadata: any | undefined = event.timeStamp || event.type;
-
-  const formEl = event.target as HTMLFormElement;
-  const submittedPrompt = formEl.elements.namedItem('prompt-field') as HTMLTextAreaElement;
-  const submittedAPIKey = formEl.elements.namedItem('api-field') as HTMLTextAreaElement;
-
-  let dateNow = new Date()
-
   // Generic Interface
   let metadataPayload: Record<string, any> = {
       "Timestamp": eventMetadata
   };
 
-  // Generic interface
-  const invalidPrompts: Record<string, boolean> = {
-    "": true,
-    "undefined": true
-  }
+  // Also since im using react i should stop manipulating DOM too
 
-  const spaceExtract = submittedPrompt.innerText.match("") ?? "undefined";
+  const formElement = event.target as HTMLFormElement;
+  const submittedPrompt = formElement.elements.namedItem('prompt-field') as HTMLTextAreaElement;
+  const submittedAPIKey = formElement.elements.namedItem('api-field') as HTMLTextAreaElement;
+  const spaceExtract = submittedPrompt.textContent.match("") ?? undefined;
 
-  if (typeof spaceExtract === "undefined" && invalidPrompts[`${spaceExtract}`]) {
-      console.log("Possible gibberish prompt detected")
+  // I may have to implement dynamic regex algorithm during the search soon
+
+
+
+  if (spaceExtract?.length == 0 || submittedPrompt?.textContent == "") {
+      console.log("Invalid prompt")
       return false
   }
 
-  if (submittedPrompt.innerText == "" && invalidPrompts[submittedPrompt.innerText]) {
-      console.log("No prompt detected")
-      return false
-  }
 
-  if (typeof eventMetadata === "undefined" && submittedPrompt.innerText != "undefined") {
+  if (typeof eventMetadata === "undefined") {
       console.log("Submitted but no event recorded")
       
       metadataPayload = {
         "Date": dateNow.getDate,
         "Time": dateNow.getTime
       }
-  }
-
-  if (typeof submittedPrompt === undefined) {
-    alert("No prompt detected");
-    return false;
   }
 
   const engineRequest = Engine.processPromptWorld({"metadata": metadataPayload, "prompt": submittedPrompt, "model": submittedAPIKey})
@@ -139,6 +128,7 @@ function LandingPage() {
   const [prompt, setPrompt] = useState('');
   const [sessionStarted, startSession] = useState(false);
   const [showKey, setShowKey] = useState(false);
+  const [errorPromptMsg, setErrorShow] = useState('');
 
   if (sessionStarted === true) {
 
@@ -158,6 +148,14 @@ function LandingPage() {
       navigate("/home");
     }
   }, [sessionStarted, navigate]);
+
+  useEffect(() => {
+
+    if (errorPromptMsg) {
+      
+    }
+
+  }, [errorPromptMsg])
 
   return (
     <div className="landing">
@@ -211,7 +209,16 @@ function LandingPage() {
             other visuals — it creates the world where you're not the main character, but a character amongst characters.
           </p>
 
-          <form onSubmit={(event) => {initiateProcess(event) && startSession(true)}} className="prompt-shell">
+          <form onSubmit={(event) => {
+              
+              if (initiateProcess(event)) {
+                startSession(true);
+              } else {
+                setErrorShow('')
+              }
+              return true; 
+              }
+            } className="prompt-shell">
             <div className="prompt-chrome">
               <div className="chrome-dots">
                 <span />

@@ -36,9 +36,6 @@ app.get('/api_check', async function handler (request, reply) {
 
 app.get('/engine', async function handler(request: Request, reply) {
 
-  const data = await response.json();
-  console.log(data);
-
   const totalMemory = os.totalmem();
   const freeMemory = os.freemem();
   const usedMemory = totalMemory - freeMemory;

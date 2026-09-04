@@ -14,20 +14,11 @@ OBSERVED = TopicPartition('OBSERVED', 0)
 UNOBSERVED = TopicPartition('UNOBSERVED', 0)
 MISC = TopicPartition('MISC', 0)
 
-consumer = KafkaConsumer(bootstrap_servers='localhost:9092')
-consumer.assign([OBSERVED, UNOBSERVED, MISC])
-
 producer = KafkaProducer(bootstrap_servers='localhost:9092')
-
-OBSERVED = TopicPartition('OBSERVED', 0)
-UNOBSERVED = TopicPartition('UNOBSERVED', 0)
-MISC = TopicPartition('MISC', 0)
 
 consumer = KafkaConsumer(bootstrap_servers='localhost:9092')
 consumer.assign([OBSERVED, UNOBSERVED, MISC])
 consumer.poll
-
-producer = KafkaProducer(bootstrap_servers='localhost:9092')
 
 @app.get("/")
 
