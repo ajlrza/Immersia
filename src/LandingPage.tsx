@@ -68,7 +68,7 @@ const HINTS = [
 ];
 
 
-function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.SubmitEvent<HTMLFormElement>): any {
+function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.SubmitEvent<HTMLFormElement>): boolean | Record<string, boolean | object> {
 
   event.preventDefault();
 
@@ -120,7 +120,17 @@ function initiateProcess(event: React.MouseEvent<HTMLButtonElement, MouseEvent> 
 
   const engineRequest = Engine.processPromptWorld({"metadata": metadataPayload, "prompt": submittedPrompt, "model": submittedAPIKey})
 
-  return engineRequest;
+  if (engineRequest) {
+    return {
+      "status": true,
+      "response": engineRequest
+    }
+  } else {
+    return {
+      "status": false,
+      "response": engineRequest
+    }
+  }
 
 }
 
