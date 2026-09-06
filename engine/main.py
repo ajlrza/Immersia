@@ -4,9 +4,12 @@ from kafka import KafkaConsumer, KafkaProducer
 
 from kafka.structs import TopicPartition
 
-class PerfPayload(BaseModel):
-    resources: float
-    data: str  
+from .dataclasses import (
+    EnginePayload,
+    PromptPayload,
+    PerfPayload,
+    Data
+)
 
 app = FastAPI()
 
@@ -30,7 +33,7 @@ async def health_check():
     return {"status": "healthy"}
 
 @app.get("/engine", tags=["Engine"])
-async def route_payloads(perfPayload: PerfPayload):
+async def route_payloads(userStates: EnginePayload = None, firstPrompt: PromptPayload = None, perfPayload: PerfPayload = None):
     
     hardware_priority = {
         "0.85": 0.85,
