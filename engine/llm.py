@@ -1,7 +1,7 @@
 import os, websockets
 from huggingface_hub import HfApi
 from huggingface_hub import login, DeviceCodeError
-from .dataclasses import (
+from .engine_dc import (
   EnginePayload,
   PromptPayload,
   Data

@@ -4,7 +4,7 @@ from kafka import KafkaConsumer, KafkaProducer
 
 from kafka.structs import TopicPartition
 
-from .dataclasses import (
+from .engine_dc import (
     EnginePayload,
     PromptPayload,
     PerfPayload,
