@@ -4,10 +4,6 @@ from dataclasses import dataclass, Fields, asdict
 import re
 import orjson
 
-@dataclass
-class Data:
-    pass
-
 class KVDatabase:
     """LMDB Key-Value Database for faster reading and persistent reading"""
 
