@@ -15,9 +15,9 @@ export type avatarState = {
 
 export type positionState = {
     StateLinker: positionState,
-    x: string,
-    y: string,
-    z: string
+    x: number,
+    y: number,
+    z: number
 }
 
 export type worldState = {

@@ -1,4 +1,4 @@
-import type { spriteProperties, loadEngineAPIKey, clientPayload, enginePayload } from '../interfaces/engine_interfaces'
+import type { spriteProperties, loadEngineAPIKey, promptPayload, enginePayload } from '../interfaces/engine_interfaces'
 
 const inMemoryBuffer: object = {
     rendering: Uint8Array, 
@@ -30,7 +30,7 @@ export function sendEngineRequest(payload: enginePayload): any {
 
 };
 
-export function processPromptWorld(payload: clientPayload, key: string, model: string): any {
+export function processPromptWorld(payload: promptPayload, key: string, model: string): any {
 
     const clientPrompt: string = `Prompt: ${payload.prompt}, Metadata: ${payload.metadata}, Key: ${key}, Model: ${model}`
 

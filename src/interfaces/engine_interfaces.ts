@@ -9,14 +9,14 @@ export type enginePayload {
     World: worldState,
 }
 
-export interface clientPayload {
+export interface promptPayload {
     metadata: object,
     prompt: string
 }
 
 export interface dataHashing {
    hashedObject: any,
-   hashString: string // random
+   hashString: string 
 }
 
 export interface actionList {
@@ -35,11 +35,3 @@ export interface loadEngineAPIKey {
     apiKey: string,
     modelName: string
 }
-
-export interface extData {
-    genExt: generalStateExt,
-    avtExt: avatarStateExt,
-    pstExt: positionStateExt,
-    wrldExt: worldStateExt
-}
-
