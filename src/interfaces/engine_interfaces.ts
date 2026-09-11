@@ -1,13 +1,19 @@
 import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
 import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
 
-export type enginePayload {
-    Action: actionList,
-    Avatar: avatarState,
-    State: generalState,
-    Position: positionState,
-    World: worldState,
-}
+export type enginePayload = {
+  Action: actionList;
+  Avatar: avatarState;
+  State: generalState;
+  Position: positionState;
+  World: worldState;
+  Ext?: 
+    | Record<string, generalStateExt & avatarStateExt & positionStateExt & worldStateExt> 
+    | generalStateExt 
+    | avatarStateExt 
+    | positionStateExt 
+    | worldStateExt;
+};
 
 export interface promptPayload {
     metadata: object,
