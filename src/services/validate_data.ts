@@ -1,6 +1,19 @@
 import type { actionList, spriteProperties, loadEngineAPIKey, enginePayload } from '../interfaces/engine_interfaces'
-import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
-import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
+import type { extStates, generalState, avatarState, positionState, worldState } from '../types/state_types'
+import type { 
+    extPayload, 
+    generalStateExt, 
+    avatarStateExt, 
+    positionStateExt, 
+    worldStateExt } from '../types/state_types'
+import type { 
+    mainValid, 
+    linkerValid, 
+    extValid, 
+    definedExtList, 
+    definedMainList, 
+    strStatesValid, 
+    numStatesValid } from '../types/data_validation_types'
 
 type Validator = { validate: (val: unknown) => boolean };
 
@@ -8,6 +21,12 @@ class StringValidator {
   validate(val: unknown): boolean {
     return typeof val === "string";
   }
+}
+
+class NumValidator {
+    validate(val: unknown): boolean {
+        return typeof val === "number"
+    }
 }
 
 class BooleanValidator {
@@ -19,6 +38,12 @@ class BooleanValidator {
 class ObjectValidator {
     validate(val: unknown): boolean {
         return typeof val === "object";
+    }
+}
+
+class RecordValidator {
+    validate(val: unknown): boolean {
+        return typeof val === 'object' && typeof val !== null && !Array.isArray(val)
     }
 }
 
@@ -34,85 +59,99 @@ function checkActionData(actionData: actionList): void {
 
 const objValidate = new ObjectValidator()
 const strValidate = new StringValidator()
+const numValidate = new NumValidator()
+const recValidate = new RecordValidator()
 const boolValidate = new BooleanValidator()
 
-function checkExtData(extData: any): Record<string, Record<string, any>> {
-    
-    let invalidCount: number = 0;
+export function checkMainStates(states: enginePayload): Record<string, mainValid | linkerValid | strStatesValid | numStatesValid> {
 
-    const genExt: generalStateExt = extData ?? undefined;
-    const avtExt: avatarStateExt = extData ?? undefined;
-    const pstExt: positionStateExt = extData ?? undefined;
-    const worldExt: worldStateExt = extData ?? undefined;
+    const objValid: mainValid = {
+        "gen": objValidate.validate(states.State),
+        "avt": objValidate.validate(states.Avatar),
+        "pst": objValidate.validate(states.Position), 
+        "world": objValidate.validate(states.World), 
+        "defined": [
+            states.State ?? undefined,
+            states.Avatar ?? undefined,
+            states.Position ?? undefined,
+            states.World ?? undefined
+        ],
+    }
+
+    const strValid: strStatesValid = {
+        "gen": strValidate.validate(states.State.StateOne) 
+               && strValidate.validate(states.State.StateTwo) 
+               && strValidate.validate(states.State.StateThree),
+        "avt": strValidate.validate(states.Avatar.EmotionOne)
+               && strValidate.validate(states.Avatar.EmotionTwo)
+               && strValidate.validate(states.Avatar.EmotionThree),
+    }
+
+    const numValid: numStatesValid= {
+        "pst": numValidate.validate(states.Position.x)
+               && numValidate.validate(states.Position.y)
+               && numValidate.validate(states.Position.z),
+        "world": numValidate.validate(states.World.Acceleration)
+                 && numValidate.validate(states.World.Force)
+                 && numValidate.validate(states.World.Gravity)
+                 && numValidate.validate(states.World.Mass)
+                 && numValidate.validate(states.World.Torque)
+    }
+
+    const linkerValid: linkerValid = {
+        "genLinker": objValidate.validate(states.State?.StateLinker),
+        "avtLinker": objValidate.validate(states.Avatar?.StateLinker),
+        "pstLinker": objValidate.validate(states.Position?.StateLinker),
+        "worldLinker": objValidate.validate(states.World?.StateLinker),
+        "defined": [
+            states.State.StateLinker ?? undefined,
+            states.Avatar.StateLinker ?? undefined,
+            states.Position.StateLinker ?? undefined,
+            states.World.StateLinker ?? undefined
+        ]
+    }
+
+    return {
+        "mainValidat": objValid,
+        "linkerValid": linkerValid,
+        "strValid": strValid,
+        "numValid": numValid
+    }
+    
+};
+
+export function checkExtData(extData: extPayload): boolean | Record<string, extValid> {
 
     if (!extData || typeof extData !== 'object')  {  
-        invalidCount += 1;
+        return false
     }
 
-    if (!('extStates' in genExt === undefined) && !('extStates' in avtExt === undefined) && ('extStates' in pstExt === undefined) && ('extStates' in worldExt === undefined)) {
-        invalidCount += 4;
-    }
-
-    const extObjValid: Record<string, any> = {
-        "genExt": objValidate.validate(genExt),
-        "avtExt": objValidate.validate(avtExt),
-        "pstExt": objValidate.validate(pstExt), 
-        "worldExt": objValidate.validate(worldExt), 
+    const extObjValid: extValid = {
+        "genExt": objValidate.validate(extData.genExt),
+        "avtExt": objValidate.validate(extData.avtExt),
+        "pstExt": objValidate.validate(extData.pstExt), 
+        "worldExt": objValidate.validate(extData.worldExt), 
         "defined": [
-            genExt ?? undefined,
-            avtExt ?? undefined,
-            pstExt ?? undefined,
-            worldExt ?? undefined
+            extData.genExt ?? undefined,
+            extData.avtExt ?? undefined,
+            extData.pstExt ?? undefined,
+            extData.worldExt ?? undefined
         ]
     };
+
+    const extRecordsValid: extValid = {
+        "genExt": recValidate.validate(extData.genExt.extStates),
+        "avtExt": recValidate.validate(extData.avtExt.extStates),
+        "pstExt": recValidate.validate(extData.pstExt.extStates),
+        "worldExt": recValidate.validate(extData.worldExt.extStates)
+    }
 
     // yo ill do the onefor extState its record<string, any> validation later, for now its extObj as a whole since
     // extData is mainData + extData record<string, any>
 
     return {
-        "obj": extObjValid,
-        "record": {} 
+        "extObj": extObjValid,
+        "extRec": extRecordsValid
     }
 }
-
-
-function checkMainStates(states: any): Record<string, Record<string, any>> {
-
-    const genState: generalState = states ?? undefined;
-    const avtState: avatarState = states ?? undefined;
-    const pstState: positionState = states ?? undefined;
-    const worldState: worldState = states ?? undefined;
-
-    const objValid: Record<string, any> = {
-        "general": objValidate.validate(genState),
-        "avatar": objValidate.validate(avtState),
-        "position": objValidate.validate(pstState), 
-        "world": objValidate.validate(worldState), 
-        "defined": [
-            genState ?? undefined,
-            avtState ?? undefined,
-            pstState ?? undefined,
-            worldState ?? undefined
-        ],
-    }
-
-    const linkerValid: Record<string, any> = {
-        "genLinker": objValidate.validate(genState?.StateLinker),
-        "avtLinker": objValidate.validate(avtState?.StateLinker),
-        "pstLinker": objValidate.validate(pstState?.StateLinker),
-        "worldLinker": objValidate.validate(worldState?.StateLinker),
-        "defined": [
-            genState.StateLinker ?? undefined,
-            avtState.StateLinker ?? undefined,
-            pstState.StateLinker ?? undefined,
-            worldState.StateLinker ?? undefined
-        ]
-    }
-
-    return {
-        "obj": objValid,
-        "linker": linkerValid
-    }
-    
-};
     

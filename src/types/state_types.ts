@@ -1,4 +1,5 @@
 // Generalized, Localized, and Deterministic Types
+
 export type generalState = {
     StateLinker: generalState
     StateOne: string,
@@ -30,6 +31,17 @@ export type worldState = {
 }
 
 // Intuitive, Semantic, and Imaginative Types
+
+export type extPayload = {
+    genExt: generalStateExt,
+    avtExt: avatarStateExt,
+    pstExt: positionStateExt,
+    worldExt: worldStateExt
+}
+
+export type extStates = {
+  Ext: generalState | avatarState | positionState | worldState
+};
 
 export type generalStateExt = {
     generalState: generalState,
