@@ -1,7 +1,9 @@
 import type { spriteProperties, loadEngineAPIKey, promptPayload, enginePayload } from '../interfaces/engine_interfaces'
 import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
-import type { extValidationRecord } from '../types/data_validation_types'
-import { checkExtData, checkMainStates } from '../services/validate_data'
+import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
+import type { extValid } from '../types/data_validation_types'
+import type { extPayload } from '../types/state_types'
+import { checkMainStates, checkExtRecord, checkExtSingle } from '../services/validate_data'
 
 const inMemoryBuffer: Record<string, any> = {
     rendering: Uint8Array ?? undefined, 
@@ -20,13 +22,18 @@ export function validateData(payload: enginePayload): Record<string, Record<stri
     return statesValid;
 };
 
-export function validateExt(
-    extPayload: extValidationRecord | generalStateExt | avatarStateExt | positionStateExt | worldStateExt
-): Record<string, Record<string, any>> {
-    
-    const extValid: Record<string, Record<string, any>> = checkExtData(extPayload)
+export function validateExtRec(payload: extPayload | undefined): boolean | Record<string, extValid> {
 
-    return extValid;
+    const extValidated: boolean | Record<string, extValid> = checkExtRecord(payload)
+
+    return extValidated;
+}
+
+export function validateSingleExt(extState: generalStateExt | avatarStateExt | positionStateExt | worldStateExt): boolean | Record<string, boolean> {
+
+    const extValidated: boolean | Record<string, boolean> = checkExtSingle(extState)
+
+    return extValidated
 }
 
 export function sendEngineRequest(payload: enginePayload): any {
@@ -34,10 +41,26 @@ export function sendEngineRequest(payload: enginePayload): any {
     let userStatesRequest: string
 
     const statesValidation: Record<string, any> = validateData(payload)
-    let extValidation: Record<string, Record<string, any>> | undefined;
+    let extValidation: boolean | Record<string, Record<string, any>> | Record<string, boolean>;
 
     if (payload.Ext) {
-        extValidation = validateExt(payload.Ext)
+
+        switch (payload.Ext?.type) {
+            case "generalState":
+                extValidation = validateSingleExt(payload.Ext);
+                break
+            case "avatarState":
+                extValidation = validateSingleExt(payload.Ext);
+                break
+            case "positionState":
+                extValidation = validateSingleExt(payload.Ext);
+                break
+            case "worldState":
+                extValidation = validateSingleExt(payload.Ext);
+                break
+            case "extRecord":
+                extValidation = validateExtRec(payload.ExtRec)
+        }
         userStatesRequest = 
         `
         Action: ${payload.Action}, 
@@ -48,7 +71,7 @@ export function sendEngineRequest(payload: enginePayload): any {
         `
     } 
     else {
-        extValidation = undefined
+        extValidation = false
     }
 
     const userStates: string = `Action: ${payload.Action}, Avatar: ${payload.Avatar}, State: ${payload.State}, World: ${payload.World}`

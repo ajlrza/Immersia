@@ -1,3 +1,4 @@
+import type { extPayload } from '../types/state_types'
 import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
 import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
 
@@ -7,12 +8,13 @@ export type enginePayload = {
   State: generalState;
   Position: positionState;
   World: worldState;
-  Ext?: 
-    | Record<string, generalStateExt & avatarStateExt & positionStateExt & worldStateExt> 
+  Ext?:
     | generalStateExt 
     | avatarStateExt 
     | positionStateExt 
     | worldStateExt;
+  ExtRec?: 
+    | extPayload
 };
 
 export interface promptPayload {

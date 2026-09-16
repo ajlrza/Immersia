@@ -33,6 +33,7 @@ export type worldState = {
 // Intuitive, Semantic, and Imaginative Types
 
 export type extPayload = {
+    type: string
     genExt: generalStateExt,
     avtExt: avatarStateExt,
     pstExt: positionStateExt,
@@ -44,21 +45,21 @@ export type extStates = {
 };
 
 export type generalStateExt = {
-    generalState: generalState,
+    type: string,
     extStates: Record<string, any>;
 }
 
 export type avatarStateExt = {
-    avatarState: avatarState,
+    type: string,
     extStates: Record<string, any>;
 }
 
 export type positionStateExt = {
-    positionState: positionState,
+    type: string,
     extStates: Record<string, any>;
 }
 
 export type worldStateExt = {
-    worldState: worldState,
+    type: string,
     extStates: Record<string, any>;
 }

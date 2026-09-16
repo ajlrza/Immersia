@@ -120,7 +120,23 @@ export function checkMainStates(states: enginePayload): Record<string, mainValid
     
 };
 
-export function checkExtData(extData: extPayload): boolean | Record<string, extValid> {
+export function checkExtSingle(extData: generalStateExt | avatarStateExt | positionStateExt | worldStateExt): boolean | Record<string, boolean> {
+
+    if (!extData || typeof extData !== 'object')  {  
+        return false
+    }
+
+    const extObjValid: boolean = objValidate.validate(extData)
+    const extRecordsValid: boolean = recValidate.validate(extData.extStates)
+
+    return {
+        "extObj": extObjValid,
+        "extRec": extRecordsValid
+    }
+
+}
+
+export function checkExtRecord(extData: extPayload | undefined): boolean | Record<string, extValid> {
 
     if (!extData || typeof extData !== 'object')  {  
         return false
