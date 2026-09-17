@@ -1,31 +1,11 @@
 import os, websockets
 from huggingface_hub import HfApi
 from huggingface_hub import login, DeviceCodeError
-from engine_dataclasses.main_dc import (
-  EnginePayload,
-  PromptPayload,
-  Data
-)
+from engine_dataclasses.main_dc import (EnginePayload, PromptPayload)
 
 # thinking of getting inspiration from IPv6 neighbor solicit and broadcasting
 
 # Build a unified middleware service hosted on different soon so if errors occur it wont hit the app
-API_KEY_CATALOG: set[str] = {
-  'OPENAI', 
-  'ANTHROPIC', 
-  'GOOGLE', 
-  'MISTRAL', 
-  'COHERE', 
-  'PERPLEXITY',
-  'OPENROUTER',
-  'GROQ',
-  'TOGETHER',
-  'HF'
-  'DEEPINFRA',
-  'AZURE-OAI',
-  'AWS',
-  'VERTEX',
-  }
 
 async def api_call(
     user_states: EnginePayload = None, 
