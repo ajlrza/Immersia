@@ -5,9 +5,15 @@ import (
      "log"
      "github.com/gofiber/fiber/v3"
      "net/url"
-     "cache_memory"
      //"net/http"
 )
+type InteractionMetadata struct {
+    EventWhen string
+    GraphMasterID int // Master identifier responsible for placing the interaction data
+    GraphNodes int // How many graph nodes, used for optimizing and storing properly
+    StatesAffected int // How many states affected, used also for optimizing and compress
+    EngineStatus string // Engine status as of this interaction
+}
 
 type UpdatedStruct struct {
     Action string
@@ -17,9 +23,17 @@ type UpdatedStruct struct {
 }
 
 type EnginePayload struct {
-    Context string 
-    UpdatedStruct UpdatedStruct 
-    ByteData int64  
+    Action string
+    Avatar string 
+    Position uint32
+    World string 
+    Metadata InteractionMetadata
+}
+
+type EngineResponse struct {
+    Context string
+    UpdatedStruct UpdatedStruct
+    ByteData uint32
 }
 
 type PromptPayload struct {
@@ -35,6 +49,8 @@ type PacketHeader struct {
     Length  uint16  
     ID      uint32 
 }
+
+// func EngineExtendor(ExtendedState ...)
 
 func main() {
      

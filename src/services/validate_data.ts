@@ -1,5 +1,4 @@
-import type { actionList, spriteProperties, loadEngineAPIKey, enginePayload } from '../interfaces/engine_interfaces'
-import type { extStates, generalState, avatarState, positionState, worldState } from '../types/state_types'
+import type { actionList, spriteProperties, enginePayload, promptPayload } from '../interfaces/engine_interfaces'
 import type { 
     extPayload, 
     generalStateExt, 
@@ -13,7 +12,9 @@ import type {
     definedExtList, 
     definedMainList, 
     strStatesValid, 
-    numStatesValid } from '../types/data_validation_types'
+    numStatesValid,
+    promptValidation
+} from '../types/data_validation_types'
 
 type Validator = { validate: (val: unknown) => boolean };
 
@@ -170,4 +171,41 @@ export function checkExtRecord(extData: extPayload | undefined): boolean | Recor
         "extRec": extRecordsValid
     }
 }
+
+const TOKEN_PROMPT_LIMIT = 8000
+const INVALID_PROMPT_LENGTH = 0
     
+export function validatePromptPayload(promptPayload: promptPayload): boolean | Record<string, boolean> {
+    
+    if (promptPayload.prompt.length == INVALID_PROMPT_LENGTH) {
+        return false
+    }
+
+    if (promptPayload.prompt.length >= TOKEN_PROMPT_LIMIT) {
+        const invalidPrompt: promptValidation = {
+            isCharLimit: true
+        }
+        return invalidPrompt
+    }
+
+    const validPrompt: promptValidation = {
+        isNone: false,
+        isString: true,
+        isCharLimit: false
+    }
+
+    const gibberishDetected: boolean = gibberishDetector(promptPayload.prompt);
+
+    return validPrompt
+
+}
+
+// Add future advanced AST for guardrails, preventing stupid ass prompts, or any non lore prompts wasting tokens/or wasting server/engine resources
+
+
+// Implement sliding window, optimized, and 
+export function gibberishDetector(prompt: string): boolean {
+
+    return false
+
+}

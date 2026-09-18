@@ -23,3 +23,13 @@ class PerfPayload:
 @dataclass
 class Data:
     pass
+
+@dataclass
+class ContextWindow:
+    Tier: str # Free, Commercial, Enterprise
+    Amount: int
+
+@dataclass
+class OperationStatus:
+    Status: str
+    LastUpdate: str

@@ -17,9 +17,20 @@ export type enginePayload = {
     | extPayload
 };
 
+// Stored in LMDB and read from LMDB then mapped to Graph DBs
+export interface InteractionMetadata {
+    EventWhen: Date
+    GraphMasterID: number // Master identifier responsible for placing the interaction data
+    GraphNodes: number // How many graph nodes, used for optimizing and storing properly
+    StatesAffected: number // How many states affected, used also for optimizing and compress
+    EngineStatus: number // Engine status as of this interaction
+}
+
 export interface promptPayload {
     metadata: object,
-    prompt: string
+    prompt: string,
+    key?: string,
+    model?: string
 }
 
 export interface dataHashing {
@@ -37,9 +48,4 @@ export interface spriteProperties {
     spriteName: string,
     spriteType: string,
     spriteImage: string
-}
-
-export interface loadEngineAPIKey {
-    apiKey: string,
-    modelName: string
 }

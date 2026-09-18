@@ -5,6 +5,8 @@ import type { extValid } from '../types/data_validation_types'
 import type { extPayload } from '../types/state_types'
 import { checkMainStates, checkExtRecord, checkExtSingle } from '../services/validate_data'
 
+    // need to strip whitespaces in both prompt payloads and engine payloads
+
 const inMemoryBuffer: Record<string, any> = {
     rendering: Uint8Array ?? undefined, 
     stateProcess: Array ?? undefined,
