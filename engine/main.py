@@ -1,15 +1,13 @@
 from fastapi import FastAPI, WebSocket
-
 from kafka import KafkaConsumer, KafkaProducer
-
 from kafka.structs import TopicPartition
-
-from .engine_dc import (
+from engine_dataclasses.main_dc import (
     EnginePayload,
     PromptPayload,
     PerfPayload,
     Data
 )
+from engine.llm_router import router
 
 app = FastAPI()
 
@@ -20,6 +18,7 @@ MISC = TopicPartition('MISC', 0)
 producer = KafkaProducer(bootstrap_servers='localhost:9092')
 
 consumer = KafkaConsumer(bootstrap_servers='localhost:9092')
+
 consumer.assign([OBSERVED, UNOBSERVED, MISC])
 consumer.poll
 
@@ -32,20 +31,31 @@ def read_root():
 async def health_check():
     return {"status": "healthy"}
 
+HARDWARE_PRIORITY = {
+    "0.85": 0.85,
+    "0.70": 0.70,
+    "0.50": 0.50
+}
+
 @app.get("/engine", tags=["Engine"])
-async def route_payloads(userStates: EnginePayload = None, firstPrompt: PromptPayload = None, perfPayload: PerfPayload = None):
+async def route_payloads(UserStates: EnginePayload = None, FirstPrompt: PromptPayload = None, PerfPayload: PerfPayload = None):
     
-    hardware_priority = {
-        "0.85": 0.85,
-        "0.70": 0.70,
-        "0.50": 0.50
-    }
+    if (FirstPrompt):
+        Router = router.RouterEntrypoint(FirstPrompt)
 
-    payload_bytes = perfPayload.data.encode('utf-8')
+        if Router:
+            pass
 
-    if str(perfPayload.resources) in hardware_priority:
-        hardware_used = hardware_priority[str(perfPayload.resources)]
-        
+    payload_bytes: bytes | None
+
+    if (PerfPayload and PerfPayload.Data != ""):
+        payload_bytes = PerfPayload.Data.encode('utf-8')
+    else:
+        payload_bytes = None
+        print("No data received from performance payload.")
+
+    if str(PerfPayload.PercUsed) in HARDWARE_PRIORITY:
+        hardware_used = HARDWARE_PRIORITY[str(PerfPayload.PercUsed)]
         match hardware_used:
             case 0.85:
                 producer.send('UNOBSERVED', value=payload_bytes, partition=0)
@@ -54,6 +64,13 @@ async def route_payloads(userStates: EnginePayload = None, firstPrompt: PromptPa
             case 0.50:
                 producer.send('OBSERVED', value=payload_bytes, partition=0)
     else:
-        producer.send('MISC', value=payload_bytes, partition=0)  
+        producer.send('MISC', value=payload_bytes, partition=0)     
+
+    if (UserStates):
+        Router = router.RouterEntrypoint(UserStates)
+
+        if Router:
+            pass
+        
         
     return {"status": "Payload routed successfully"}

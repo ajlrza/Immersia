@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass, fields
 
+
 @dataclass
 class EnginePayload:
     Action: str
@@ -17,8 +18,8 @@ class PromptPayload:
 
 @dataclass
 class PerfPayload:
-    resources: float
-    data: str  
+    PercUsed: float
+    Data: str  
 
 @dataclass
 class Data:
@@ -33,3 +34,15 @@ class ContextWindow:
 class OperationStatus:
     Status: str
     LastUpdate: str
+
+@dataclass
+class APIConfig:
+    Window: ContextWindow 
+    Status: OperationStatus
+    RPM: int
+    PREFIX: str
+
+@dataclass
+class RouterStatus:
+    Status: str # NOT ROUTING | ROUTING | ROUTED
+    RouterLayer: str # ENTRY | CHECK | LOAD | UPDATE | API | RESPONSE
