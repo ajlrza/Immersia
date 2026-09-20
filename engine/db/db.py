@@ -1,8 +1,9 @@
 import lmdb, threading, types
 from typing import any, get_origin
-from dataclasses import dataclass, Fields, asdict
+from dataclasses import asdict
 import re
 import orjson
+from engine.engine_dataclasses.lmdb_dc import Interaction
 
 class KVDatabase:
     """LMDB Key-Value Database for faster reading and persistent reading"""
@@ -27,11 +28,11 @@ class KVDatabase:
             self.join()
             return self.result
 
-    def DbWrite(self, idx: str | int | types.NoneType, data: Data | dict[str, Any]) -> None:
+    def DbWrite(self, data: Interaction) -> None:
 
         # Separated index from DbRead
-        encoded_write_idx: str | int | types.NoneType
-        encoded_write_data: Data | dict[str, any] 
+        encoded_write_idx: int = data.Metadata.GraphMasterID
+        encoded_write_data: list[object] = [asdict(Interaction.Action), asdict(Interaction.Avatar), asdict(Interaction.Position), asdict(Interaction.World)] 
          
         with self.db.begin(write=True) as transaction:
 
@@ -56,8 +57,8 @@ class KVDatabase:
                 encoded_write_idx = idx.to_bytes()
                 encoded_write_idx = encoded_write_idx.encode()
 
-            if (isinstance(idx, Data)):
-                encoded_write_data = orjson.dumps(asdict(data.episode))
+            if (isinstance(idx, data)):
+                encoded_write_data = orjson.dumps(encoded_write_data)
 
             elif (isinstance(idx, dict)):
                 encoded_write_data = orjson.dumps(data)
@@ -66,10 +67,10 @@ class KVDatabase:
 
             print(f"Episode Buffer - {idx} written successfully")
 
-    def DbRead(self, idx: str | int | types.NoneType) -> dict[str, any]:
+    def DbRead(self, idx: int) -> dict[str, any]:
 
         # Separated index from DbWrite
-        encoded_read_idx: str | int | types.NoneType
+        encoded_read_idx: int
 
         with self.db.begin(write=False) as transaction:
 

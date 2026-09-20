@@ -1,19 +1,5 @@
 import os
-from dataclasses import dataclass, fields
-
-@dataclass
-class enginePayload:
-    Action: str
-    Avatar: str
-    State: str
-    World: str
-
-@dataclass
-class promptPayload:
-    Prompt: str
-    Metadata: str
-    Key: str
-    Model: str
+from './dataclasses.py' import enginePayload
 
 def get_data(payload: object):
     pass
