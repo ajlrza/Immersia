@@ -1,48 +1,49 @@
 import os
+from typing import Literal
 from dataclasses import dataclass, fields
 
 
 @dataclass
-class EnginePayload:
+class EnginePayload(slots=True):
     Action: str
     Avatar: str
     State: str
     World: str
 
 @dataclass
-class PromptPayload:
+class PromptPayload(slots=True):
     Prompt: str
     Metadata: str
     Key: str
     Model: str
 
 @dataclass
-class PerfPayload:
+class PerfPayload(slots=True):
     PercUsed: float
     Data: str  
 
 @dataclass
-class Data:
+class Data(slots=True):
     pass
 
 @dataclass
-class ContextWindow:
-    Tier: str # Free, Commercial, Enterprise
+class ContextWindow(slots=True):
+    Tier: Literal["Free", "Commercial", "Enterprise", "Pro", "Community"] 
     Amount: int
 
 @dataclass
-class OperationStatus:
+class OperationStatus(slots=True):
     Status: str
-    LastUpdate: str
+    LastUpdate: int
 
 @dataclass
-class APIConfig:
-    Window: ContextWindow 
+class APIConfig(slots=True):
+    Window: ContextWindow
     Status: OperationStatus
     RPM: int
     PREFIX: str
 
 @dataclass
-class RouterStatus:
-    Status: str # NOT ROUTING | ROUTING | ROUTED
-    RouterLayer: str # ENTRY | CHECK | LOAD | UPDATE | API | RESPONSE
+class RouterStatus(slots=True):
+    Status: Literal["NOT ROUTING", "ROUTING", "ROUTED"]
+    RouterLayer: Literal["ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"]

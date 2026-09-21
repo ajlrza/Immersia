@@ -2,7 +2,7 @@ from dataclasses import dataclass, Fields, asdict
 from datetime import datetime
 
 @dataclass
-class InteractionMetadata:
+class InteractionMetadata(slots=True):
     EventWhen: datetime.date
     GraphMasterID: int # Master identifier responsible for placing the interaction data
     GraphNodes: int # How many graph nodes, used for optimizing and storing properly
@@ -10,7 +10,7 @@ class InteractionMetadata:
     EngineStatus: str # Engine status as of this interaction
 
 @dataclass
-class Interaction:
+class Interaction(slots=True):
     Action: object
     Avatar: object
     Position: object
