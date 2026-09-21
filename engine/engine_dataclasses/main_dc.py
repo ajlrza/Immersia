@@ -2,25 +2,33 @@ import os
 from typing import Literal
 from dataclasses import dataclass, fields
 
+@dataclass
+class InteractionMetadata(slots=True):
+    EventWhen:      str
+    GraphMasterID:  int # Master identifier responsible for placing the interaction data
+    GraphNodes:     int # How many graph nodes, used for optimizing and storing properly
+    StatesAffected: int # How many states affected, used also for optimizing and compress
+    EngineStatus:   str # Engine status as of this interaction
 
 @dataclass
 class EnginePayload(slots=True):
-    Action: str
-    Avatar: str
-    State: str
-    World: str
+    Action:     str
+    Avatar:     str
+    Position:   str
+    World:      str
+    Metadata:   InteractionMetadata
 
 @dataclass
 class PromptPayload(slots=True):
-    Prompt: str
+    Prompt:   str
     Metadata: str
-    Key: str
-    Model: str
+    Key:      str
+    Model:    str
 
 @dataclass
 class PerfPayload(slots=True):
     PercUsed: float
-    Data: str  
+    Data:     str  
 
 @dataclass
 class Data(slots=True):
@@ -28,22 +36,35 @@ class Data(slots=True):
 
 @dataclass
 class ContextWindow(slots=True):
-    Tier: Literal["Free", "Commercial", "Enterprise", "Pro", "Community"] 
+    Tier:   Literal["Free", "Commercial", "Enterprise", "Pro", "Community"] 
     Amount: int
 
 @dataclass
 class OperationStatus(slots=True):
-    Status: str
+    Status:     str
     LastUpdate: int
 
 @dataclass
 class APIConfig(slots=True):
     Window: ContextWindow
     Status: OperationStatus
-    RPM: int
+    RPM:    int
     PREFIX: str
 
 @dataclass
 class RouterStatus(slots=True):
-    Status: Literal["NOT ROUTING", "ROUTING", "ROUTED"]
-    RouterLayer: Literal["ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"]
+    Status:         Literal["NOT ROUTING", "ROUTING", "ROUTED"]
+    RouterLayer:    Literal["ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"]
+
+@dataclass
+class EngineResponse:
+    Context:    str
+    Payload:    EnginePayload
+    ByteData:   bytearray
+
+@dataclass
+class PacketHeader(slots=True):
+    Version: int   
+    Type:    int   
+    Length:  int  
+    ID:      int 
