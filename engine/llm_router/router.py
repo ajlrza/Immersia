@@ -1,11 +1,12 @@
 import requests, websockets, base64, os, json
 import typing, types
+from typing import Literal
 import orjson
 from dataclasses import dataclasses
 from engine_dataclasses import main_dc
 from llm_router.storage import store
 
-UNIVERSAL_REQUEST = "POST /v1/chat/completions"
+UNIVERSAL_ENDPOINT = "/v1/chat/completions"
 STORE_PATH = "/storage/store.json"
 ROUTER_STATUSES: set[str] = {"NOT ROUTING", "ROUTING", "ROUTED"}
 ROUTER_LAYERS: set[str] = {"NONE", "ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"}
@@ -102,7 +103,7 @@ def CatalogCheck(paramToCheck: str, optParamToCheck: str = None) -> typing.Any |
 url = "https://github.com"
 headers = {"Authorization": os.getenv("API_CALLER_TOKEN")} 
 
-def CheckAPI(key: str = None, model: str = None) -> bool:
+def CheckAPI(key: str = None, model: str = None) -> Literal['UP', 'DOWN']:
 
     Model: str | None
     Key: str | None
@@ -121,9 +122,12 @@ def CheckAPI(key: str = None, model: str = None) -> bool:
     
     return 'UP'
 
-def CallAPI(endpoint: str):
+def CallAPI(endpoint: str) -> main_dc.EnginePayload:
 
     try:
+
+        RouterStatus.RouterLayer = 'API'
+
         response = requests.get(endpoint, headers=headers)
         data = response.json()
 
@@ -131,7 +135,14 @@ def CallAPI(endpoint: str):
 
             encoded_content = data["content"]
             decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-            return decoded_code
+            
+            return {
+                "Action": "",
+                "Avatar": "",
+                "Position": "",
+                "World": "",
+                "Metadata": {}
+            }
 
     except:
         pass
@@ -145,7 +156,7 @@ def Broadcast(Payload: main_dc.EnginePayload | main_dc.PromptPayload):
         # Broadcast who can handle ts
         pass
 
-def Route(key: str = None, model: str = None) -> types.Callable | dict[str, main_dc.APIConfig]:
+def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | types.Callable:
 
     if isinstance(key, types.NoneType) and isinstance(key, types.NoneType):
         
@@ -171,10 +182,18 @@ def Route(key: str = None, model: str = None) -> types.Callable | dict[str, main
 
             if len(checkBoth == 1):
                 checkedForAPI = CheckAPI(checkBoth[0])
-                return checkedForAPI
 
-            checkForAPI = CheckAPI(checkBoth[0], checkBoth[1])
-            return checkForAPI
+                if (checkedForAPI == 'UP'):
+                    return CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT)
+                elif (checkedForAPI == 'DOWN'):
+                    return Broadcast
+
+            checkedForAPI = CheckAPI(checkBoth[0], checkBoth[1])
+
+            if (checkedForAPI == 'UP'):
+                return CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT)
+            elif (checkedForAPI == 'DOWN'):
+                return Broadcast
 
         except AssertionError as e:
             print(str(e) + ", searching on huggingface... ")
@@ -188,9 +207,14 @@ def Route(key: str = None, model: str = None) -> types.Callable | dict[str, main
         if checkKey:
 
             RouterStatus.RouterLayer = "API"
-            checkForAPI = CheckAPI(checkKey)
+            checkedForAPI = CheckAPI(checkKey)
 
-def RouterEntrypoint(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> bool | Any:
+            if (checkedForAPI == 'UP'):
+                return CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT)
+            elif (checkedForAPI == 'DOWN'):
+                return Broadcast
+            
+def Router(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> main_dc.EnginePayload:
 
     # Check for router status first
 
@@ -199,14 +223,14 @@ def RouterEntrypoint(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> 
 
     elif (RouterStatus.Status == "ROUTED"):
         RouterStatus.Status = "NOT ROUTING"
+    
+    RoutedRequest: main_dc.EnginePayload | types.Callable = None
 
-    RoutedRequest: types.Callable | dict[str, main_dc.APIConfig] = Route(Payload.Key or Payload.Model)
+    if (Payload.Prompt):
+        RoutedRequest: main_dc.EnginePayload | types.Callable = Route(Payload.Key or Payload.Model)
 
-    if isinstance(RoutedRequest, types.Callable):
-        BroadcastedRequest = RoutedRequest(Payload)
+        if isinstance(RoutedRequest, types.Callable):
+            BroadcastedRequest = RoutedRequest(Payload)
 
-    if (not RoutedRequest):
-        return False
-
-    elif (RoutedRequest):
-        RouterStatus.Status = "ROUTED"
+        if RoutedRequest == 'DOWN':
+            return False

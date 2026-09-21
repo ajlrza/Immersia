@@ -1,12 +1,8 @@
 from fastapi import FastAPI, WebSocket
+from collections.abc import Buffer
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.structs import TopicPartition
-from engine_dataclasses.main_dc import (
-    EnginePayload,
-    PromptPayload,
-    PerfPayload,
-    Data
-)
+from engine_dataclasses import main_dc, lmdb_dc
 from engine.llm_router import router
 
 app = FastAPI()
@@ -38,13 +34,15 @@ HARDWARE_PRIORITY = {
 }
 
 @app.get("/engine", tags=["Engine"])
-async def route_payloads(UserStates: EnginePayload = None, FirstPrompt: PromptPayload = None, PerfPayload: PerfPayload = None):
-    
-    if (FirstPrompt):
-        Router = router.RouterEntrypoint(FirstPrompt)
+async def route_payloads(
 
-        if Router:
-            pass
+    UserStates: main_dc.EnginePayload = None, 
+    FirstPrompt: main_dc.PromptPayload = None, 
+    PerfPayload: main_dc.PerfPayload = None
+
+    ):
+    
+    payload_router = router.Router(FirstPrompt) if FirstPrompt else router.Router(UserStates)
 
     payload_bytes: bytes | None
 
@@ -54,8 +52,10 @@ async def route_payloads(UserStates: EnginePayload = None, FirstPrompt: PromptPa
         payload_bytes = None
         print("No data received from performance payload.")
 
-    if str(PerfPayload.PercUsed) in HARDWARE_PRIORITY:
+    if isinstance(payload_bytes, Buffer) and str(PerfPayload.PercUsed) in HARDWARE_PRIORITY:
+
         hardware_used = HARDWARE_PRIORITY[str(PerfPayload.PercUsed)]
+
         match hardware_used:
             case 0.85:
                 producer.send('UNOBSERVED', value=payload_bytes, partition=0)
@@ -64,13 +64,18 @@ async def route_payloads(UserStates: EnginePayload = None, FirstPrompt: PromptPa
             case 0.50:
                 producer.send('OBSERVED', value=payload_bytes, partition=0)
     else:
-        producer.send('MISC', value=payload_bytes, partition=0)     
-
-    if (UserStates):
-        Router = router.RouterEntrypoint(UserStates)
-
-        if Router:
-            pass
+        producer.send('MISC', value=[UserStates, PerfPayload.PercUsed], partition=0)     
         
         
-    return {"status": "Payload routed successfully"}
+    return {
+            "success": True,
+            "status_code": 200,
+            "message": "Engine successfully processed payload.",
+            "data": {
+                "Action": payload_router.Action,
+                "Avatar": payload_router.Avatar,
+                "Position": payload_router.Position,
+                "World": payload_router.World,
+                "Metadata": payload_router.Metadata
+            }
+        }
