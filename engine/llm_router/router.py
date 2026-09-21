@@ -1,5 +1,5 @@
 import requests, websockets, base64, os, json
-from typing import Any
+import typing, types
 import orjson
 from dataclasses import dataclasses
 from engine_dataclasses import main_dc
@@ -17,26 +17,22 @@ RouterStatus: main_dc.RouterStatus = {
     "RouterLayer": "NONE"
 }
 
-
 class CatalogChecker:
 
     def __init__(self):
         self.Catalog = store.MODEL_CATALOG
 
-    def __contains__(self, Key: str):
+    def __contains__(self, Model: str):
 
-        if Key in self.Catalog:
+        if Model in self.Catalog:
 
-            upperCaseKey = Key.upper()
+            upperCaseModel = Model.upper()
             # Checks the actual python code file
-            providerMetadata = getattr(store, upperCaseKey, None) 
+            providerMetadata = getattr(store, upperCaseModel, None) 
 
             return providerMetadata
 
 catalogChecker = CatalogChecker()
-
-def WMRoute():
-    pass
 
 PROVIDER_CONFIG: any = None
 
@@ -45,9 +41,10 @@ def UpdateJSONStore(Config: str, Value: str, Model: str = None) -> bool:
     if os.path.exists(STORE_PATH):
         try:
 
-            with open(STORE_PATH, 'r') as f:
+            with open(STORE_PATH, 'w') as JSONStore:
 
-                PROVIDER_CONFIG = orjson.loads(f)
+                PROVIDER_CONFIG = orjson.loads(JSONStore)
+                
 
                 return True
 
@@ -84,9 +81,9 @@ def UpdatePyStore(Config: str, Value: str, Model: str = None) -> bool | orjson.J
         RouterStatus.Status = "NONE"
         raise AssertionError("Config Key does not exist")
 
-def CatalogCheck(paramToCheck: str, optParamToCheck: str = None) -> Any | None | list[Any | None]:
+def CatalogCheck(paramToCheck: str, optParamToCheck: str = None) -> typing.Any | None | list[typing.Any | None]:
     
-    checkedCatalog: Any | None
+    checkedCatalog: typing.Any | None
 
     if (optParamToCheck):
 
@@ -107,41 +104,81 @@ headers = {"Authorization": os.getenv("API_CALLER_TOKEN")}
 
 def CheckAPI(key: str = None, model: str = None) -> bool:
 
-    data: Any = None
+    Model: str | None
+    Key: str | None
 
-    if key:
-        response = requests.get(url, headers=headers)
+    if model:
+        Model = model.upper()
+
+    # Checks the actual python code file
+    providerMetadataStatus = getattr(store, Model.__getattribute__('Status'), None) 
+
+    if providerMetadataStatus.__getattribute__('LastUpdate')  > 365:
+        print("Potentially depracated AI API and Model, use at own risk.")
+
+    if (providerMetadataStatus == 'DOWN'):
+        return 'DOWN'
+    
+    return 'UP'
+
+def CallAPI(endpoint: str):
+
+    try:
+        response = requests.get(endpoint, headers=headers)
         data = response.json()
+
+        if data.status == 200:
+
+            encoded_content = data["content"]
+            decoded_code = base64.b64decode(encoded_content).decode("utf-8")
+            return decoded_code
+
+    except:
+        pass
 
     encoded_content = data["content"]
     decoded_code = base64.b64decode(encoded_content).decode("utf-8")
 
-    pass
+def Broadcast(Payload: main_dc.EnginePayload | main_dc.PromptPayload):
 
-def Broadcast(key: str = None, model: str = None) -> bool:
+    if len(Payload.Prompt() > 10000):
+        # Broadcast who can handle ts
+        pass
 
-    if not key and model:
-        return False
+def Route(key: str = None, model: str = None) -> types.Callable | dict[str, main_dc.APIConfig]:
+
+    if isinstance(key, types.NoneType) and isinstance(key, types.NoneType):
+        
+        # Let's see which model can handle instead
+        RouterStatus.Status = "BROADCASTING"
+        return Broadcast
 
     if (RouterStatus.Status == "ROUTING"):
         return False
     elif (RouterStatus.Status == "NOT ROUTING" and RouterStatus.RouterLayer not in {"UPDATE", "LOAD", "API"}):
         RouterStatus.Status = "ROUTING"
     
-    if key == None and model == None:
-        RouterStatus.Status = "ROUTING"
-        WMRoute()
-        return # Fallback to custom world model
-
-    if key and model:
+    if isinstance(key, str) and isinstance(model, str):
 
         RouterStatus.RouterLayer = "CHECK"
         checkBoth = CatalogCheck(model, key)
-        
-        if checkBoth:
 
+        try:
             RouterStatus.RouterLayer = "API"
+            
+            assert isinstance(checkBoth, list) == True, "Model configuration does not exist"
+            assert all(isinstance(catalog, object) for catalog in checkBoth) == True, "Listed catalog is not an object"
+
+            if len(checkBoth == 1):
+                checkedForAPI = CheckAPI(checkBoth[0])
+                return checkedForAPI
+
             checkForAPI = CheckAPI(checkBoth[0], checkBoth[1])
+            return checkForAPI
+
+        except AssertionError as e:
+            print(str(e) + ", searching on huggingface... ")
+
 
     elif key and not model:
         
@@ -153,7 +190,7 @@ def Broadcast(key: str = None, model: str = None) -> bool:
             RouterStatus.RouterLayer = "API"
             checkForAPI = CheckAPI(checkKey)
 
-def RouterEntrypoint(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> bool:
+def RouterEntrypoint(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> bool | Any:
 
     # Check for router status first
 
@@ -163,10 +200,13 @@ def RouterEntrypoint(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> 
     elif (RouterStatus.Status == "ROUTED"):
         RouterStatus.Status = "NOT ROUTING"
 
-    SentBroadcast: bool | dict[str, main_dc.APIConfig] = Broadcast(Payload.Key | Payload.Model)
+    RoutedRequest: types.Callable | dict[str, main_dc.APIConfig] = Route(Payload.Key or Payload.Model)
 
-    if (not SentBroadcast):
+    if isinstance(RoutedRequest, types.Callable):
+        BroadcastedRequest = RoutedRequest(Payload)
+
+    if (not RoutedRequest):
         return False
 
-    elif (SentBroadcast):
+    elif (RoutedRequest):
         RouterStatus.Status = "ROUTED"
