@@ -1,0 +1,6 @@
+name: Python Quality Check 
+on:
+  push:
+    branches: [main]
+  pull request:
+    branches: [main]
