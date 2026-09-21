@@ -1,0 +1,6 @@
+name: Typescript Test Pipeline
+on:
+  push:
+    branches: [main]
+  pull request:
+    branches: [main]
