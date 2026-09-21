@@ -1,6 +1,11 @@
-name: Go Quality Check 
+name: Typescript Pipeline
 on:
   push:
     branches: [main]
   pull request:
     branches: [main]
+
+jobs:
+  code test:
+
+  quality check:

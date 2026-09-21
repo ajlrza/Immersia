@@ -1,6 +1,11 @@
-name: Typescript Test Pipeline
+name: Python Pipeline
 on:
   push:
     branches: [main]
   pull request:
     branches: [main]
+
+jobs:
+  code test:
+
+  quality check:
