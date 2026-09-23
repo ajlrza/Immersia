@@ -1,21 +1,34 @@
-import type { spriteProperties, loadEngineAPIKey, promptPayload, enginePayload } from '../interfaces/engine_interfaces'
-import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
-import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
-import type { extValid } from '../types/data_validation_types'
 import type { extPayload } from '../types/state_types'
+import type { extValid } from '../types/data_validation_types'
 import { checkMainStates, checkExtRecord, checkExtSingle } from '../services/validate_data'
+import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
+import type { spriteProperties, promptPayload, enginePayload } from '../interfaces/engine_interfaces'
+import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
 
-    // need to strip whitespaces in both prompt payloads and engine payloads
+// need to strip whitespaces in both prompt payloads and engine payloads
 
-const inMemoryBuffer: Record<string, any> = {
+const SOCKET: WebSocket = new WebSocket("https://www.immersia");
+const TTL: number = 180;
+
+let sentCount: number = 0;
+let bufferCount: number = 0;
+let engineStatus: string = "UP";
+
+let inMemoryBuffer: Record<string, any> = {
     rendering: Uint8Array ?? undefined, 
     stateProcess: Array ?? undefined,
 };
 
-const TTL: number = 0;
-const SENT_COUNT: number = 0;
-const BUFFER_COUNT: number = 0;
-const ENGINE_STATUS: string = "UP";
+export function closeSocket(): boolean {
+
+    SOCKET.close()
+
+    if (SOCKET.CLOSED) {
+        return true
+    }
+
+    return false
+}
 
 export function validateData(payload: enginePayload): Record<string, Record<string, any>> {
 
@@ -31,38 +44,52 @@ export function validateExtRec(payload: extPayload | undefined): boolean | Recor
     return extValidated;
 }
 
-export function validateSingleExt(extState: generalStateExt | avatarStateExt | positionStateExt | worldStateExt): boolean | Record<string, boolean> {
+export function validateSingleExt(payload: enginePayload): boolean | Record<string, boolean> | Record<string, extValid> | undefined {
 
-    const extValidated: boolean | Record<string, boolean> = checkExtSingle(extState)
+    let extValid: boolean | Record<string, boolean> | Record<string, extValid> | undefined;
 
-    return extValidated
+    switch (payload.Ext?.type) {
+        case "generalState":
+            extValid = checkExtSingle(payload.Ext);
+            break
+        case "avatarState":
+            extValid = checkExtSingle(payload.Ext);
+            break
+        case "positionState":
+            extValid = checkExtSingle(payload.Ext);
+            break
+        case "worldState":
+            extValid = checkExtSingle(payload.Ext);
+            break
+        case "extRecord":
+            extValid = validateExtRec(payload.ExtRec)
+        }
+    
+
+    return extValid
 }
 
-export function sendEngineRequest(payload: enginePayload): any {
+export function sendEngineRequest(payload: enginePayload, close: boolean = false): any | Record<string, boolean> {
 
-    let userStatesRequest: string
+    if (close) {
+        closeSocket();
+        return;
+    }
 
-    const statesValidation: Record<string, any> = validateData(payload)
-    let extValidation: boolean | Record<string, Record<string, any>> | Record<string, boolean>;
+    let userStatesRequest: string | undefined
+    let retryTimes: number = 3
+
+    let statesValidated: Record<string, any> | undefined = validateData(payload)
+    let extValidated: boolean | Record<string, Record<string, any>> | Record<string, boolean> | undefined;
 
     if (payload.Ext) {
-
-        switch (payload.Ext?.type) {
-            case "generalState":
-                extValidation = validateSingleExt(payload.Ext);
-                break
-            case "avatarState":
-                extValidation = validateSingleExt(payload.Ext);
-                break
-            case "positionState":
-                extValidation = validateSingleExt(payload.Ext);
-                break
-            case "worldState":
-                extValidation = validateSingleExt(payload.Ext);
-                break
-            case "extRecord":
-                extValidation = validateExtRec(payload.ExtRec)
-        }
+        extValidated = validateSingleExt(payload);
+    } 
+    else {
+        extValidated = undefined
+    }
+    
+    if (typeof statesValidated == 'object' && typeof extValidated == 'boolean' && !extValidated) {
         userStatesRequest = 
         `
         Action: ${payload.Action}, 
@@ -71,29 +98,65 @@ export function sendEngineRequest(payload: enginePayload): any {
         World: ${payload.World},
         Ext: ${payload.Ext}
         `
-    } 
-    else {
-        extValidation = false
+    } else {
+
+        console.log("No user states request detected, retrying...");
+        
+        while (typeof userStatesRequest != 'undefined' && typeof userStatesRequest == 'string') {
+
+            if (retryTimes == 0) {
+
+                statesValidated = undefined
+                extValidated = undefined
+                
+                break
+            }
+
+            statesValidated = validateData(payload)
+            extValidated = validateSingleExt(payload)
+
+            retryTimes -= 1
+
+        }
     }
 
-    const userStates: string = `Action: ${payload.Action}, Avatar: ${payload.Avatar}, State: ${payload.State}, World: ${payload.World}`
+    if (typeof statesValidated == 'undefined' && typeof userStatesRequest == 'undefined') {
 
-    const socket: WebSocket = new WebSocket("https://www.immersia");
-    let response;
-
-    socket.addEventListener("message", (event) => {
-        if (event.data) {
-            response = event.data
+        return {
+            "Data": undefined, 
+            "Success": false, 
+            "Message": "Invalid Payload",
+            "Log": {
+                "statesValidated": statesValidated,
+                "extValidated": extValidated
+            }
         }
-    })
 
-    if (socket.readyState == 1) {
-        socket.send(userStates.)
+    }
+
+    if (SOCKET.readyState == 1) {
+
+        if (typeof userStatesRequest != 'undefined' && typeof userStatesRequest == 'string') {
+            SOCKET.send(userStatesRequest)
+            sentCount += 1
+        }
+
     } else {
         console.error("Websocket not ready.")
     }
 
-    socket.close()
+    let response;
+
+    SOCKET.addEventListener("message", (event) => {
+
+        setTimeout(() => {
+            return "Connection Timeout";
+        }, 18000);
+        
+        if (event.data) {
+            response = event.data
+        }
+    })
 
     return response;
 
@@ -101,24 +164,34 @@ export function sendEngineRequest(payload: enginePayload): any {
 
 export function processPromptWorld(payload: promptPayload, key: string, model: string): any {
 
+    // Future retry mechanism and data validation for first prompt
+    let firstPromptRequest: string | undefined;
+    let retryTimes: number = 3
+
+    let promptValidated: Record<string, any> | undefined;
+
+
     const clientPrompt: string = `Prompt: ${payload.prompt}, Metadata: ${payload.metadata}, Key: ${key}, Model: ${model}`
 
-    const socket: WebSocket = new WebSocket("https://www.immersia");
-    let response;
-
-    socket.addEventListener("message", (event) => {
-        if (event.data) {
-            response = event.data
-        }
-    })
-
-    if (socket.readyState == 1) {
-        socket.send(clientPrompt)
+    if (SOCKET.readyState == 1) {
+        SOCKET.send(clientPrompt)
+        sentCount += 1
     } else {
         console.error("Websocket not ready.")
     }
 
-    socket.close()
+    let response;
+
+    SOCKET.addEventListener("message", (event) => {
+
+        setTimeout(() => {
+            return "Connection Timeout";
+        }, 18000);
+        
+        if (event.data) {
+            response = event.data
+        }
+    })
 
     return response;
 };

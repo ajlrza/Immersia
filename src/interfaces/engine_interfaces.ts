@@ -26,6 +26,19 @@ export interface InteractionMetadata {
     EngineStatus: number // Engine status as of this interaction
 }
 
+export interface GoResponse {
+    Context: string
+    UpdatedStruct: enginePayload
+    ByteData: number
+}
+
+export interface EngineResponse {
+    Data: GoResponse | undefined
+    Success: boolean
+    Message: string
+    Log: object
+}
+
 export interface promptPayload {
     metadata: object,
     prompt: string,
