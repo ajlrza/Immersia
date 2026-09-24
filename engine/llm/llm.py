@@ -1,6 +1,8 @@
-import os, websockets
+# THIRD PARTY - HUGGINGFACE
 from huggingface_hub import HfApi
 from huggingface_hub import login, DeviceCodeError
+
+# ENGINE MODULE
 from engine_dataclasses.main_dc import (EnginePayload, PromptPayload)
 
 # thinking of getting inspiration from IPv6 neighbor solicit and broadcasting
