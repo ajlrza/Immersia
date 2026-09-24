@@ -1,6 +1,7 @@
 import type { extPayload } from '../types/state_types'
 import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
 import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
+import type { generalStateImage, avatarStateImage, positionStateImage, worldStateImage } from '../types/state_types'
 
 export type enginePayload = {
   Action: actionList;
@@ -17,6 +18,14 @@ export type enginePayload = {
     | extPayload
 };
 
+export type engineImages = {
+    linkedPayload: enginePayload;
+    general: generalStateImage;
+    avatar: avatarStateImage;
+    position: positionStateImage;
+    world: worldStateImage;
+}
+
 // Stored in LMDB and read from LMDB then mapped to Graph DBs
 export interface InteractionMetadata {
     EventWhen: Date
@@ -27,9 +36,8 @@ export interface InteractionMetadata {
 }
 
 export interface GoResponse {
-    Context: string
-    UpdatedStruct: enginePayload
-    ByteData: number
+    NewStates: enginePayload
+    NewImage: engineImages
 }
 
 export interface EngineResponse {

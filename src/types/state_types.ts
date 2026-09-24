@@ -1,5 +1,13 @@
 // Generalized, Localized, and Deterministic Types
 
+export type PixelData = { 
+  width: number; 
+  height: number; 
+  pixels: number[]; 
+  z_buffer?: number;
+  channel?: number;
+};
+
 export type generalState = {
     StateLinker: generalState
     StateOne: string,
@@ -7,11 +15,20 @@ export type generalState = {
     StateThree: string
 };
 
+
+export type generalStateImage = {
+    image: PixelData[]
+}
+
 export type avatarState = {
     StateLinker: avatarState
     EmotionOne: string,
     EmotionTwo: string,
     EmotionThree: string
+}
+
+export type avatarStateImage = {
+    image: PixelData[]
 }
 
 export type positionState = {
@@ -21,6 +38,10 @@ export type positionState = {
     z: number
 }
 
+export type positionStateImage = {
+    image: PixelData[]
+}
+
 export type worldState = {
     StateLinker: worldState,
     Gravity: number,
@@ -28,6 +49,10 @@ export type worldState = {
     Torque: number,
     Mass: number,
     Acceleration: number
+}
+
+export type worldStateImage = {
+    image: PixelData[]
 }
 
 // Intuitive, Semantic, and Imaginative Types
