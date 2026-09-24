@@ -54,7 +54,7 @@ class APIConfig(slots=True):
 @dataclass
 class RouterStatus(slots=True):
     Status:         Literal["NOT ROUTING", "ROUTING", "ROUTED"]
-    RouterLayer:    Literal["ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"]
+    Layer:          Literal["ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"]
 
 @dataclass
 class EngineResponse:

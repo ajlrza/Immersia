@@ -1,8 +1,15 @@
-import lmdb, threading, types
+# NATIVE MODULES - TYPES
 from typing import any, get_origin
 from dataclasses import asdict
+import types
+
+# NATIVE MODULES - STRING OPS
 import re
-import orjson
+
+# THIRD PARTY - DATABASE/DATASETS/DATA LOADING
+import lmdb, orjson, threading
+
+# ENGINE MODULES
 from engine.engine_dataclasses.lmdb_dc import Interaction
 
 class KVDatabase:

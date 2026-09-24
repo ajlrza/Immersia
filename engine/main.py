@@ -1,7 +1,14 @@
+# THIRD PARTY - SERVER/CONNECTIONS
 from fastapi import FastAPI, WebSocket
+
+# NATIVE MODULES - TYPES
 from collections.abc import Buffer
+
+# THIRD PARTY - KAFKA
 from kafka import KafkaConsumer, KafkaProducer
 from kafka.structs import TopicPartition
+
+# ENIGNE MODULES 
 from engine_dataclasses import main_dc, lmdb_dc
 from engine.llm_router import router
 
