@@ -1,4 +1,3 @@
-
 const width = 2;
 const height = 2;
 
@@ -31,4 +30,3 @@ export function resetCanvas(): Uint8Array {
     const bytes = new Uint8Array(buffer);
     return bytes;
 }
-

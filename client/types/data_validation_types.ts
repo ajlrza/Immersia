@@ -1,5 +1,5 @@
-import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
-import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
+import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from './state_types'
+import type { generalState, avatarState, positionState, worldState } from './state_types'
 
 export type promptValidation = {
     "isNone"?: boolean,

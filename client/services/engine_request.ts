@@ -1,6 +1,6 @@
 import type { extPayload } from '../types/state_types'
 import type { extValid } from '../types/data_validation_types'
-import { checkMainStates, checkExtRecord, checkExtSingle } from '../services/validate_data'
+import { checkMainStates, checkExtRecord, checkExtSingle } from './validate_data'
 import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
 import type { spriteProperties, promptPayload, enginePayload } from '../interfaces/engine_interfaces'
 import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
