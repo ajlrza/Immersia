@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import * as Engine from './services/engine_request'
+import * as Engine from '../services/engine_request'
 import './LandingPage.css';
 
 const ICON_STROKE = 1.75;
@@ -194,10 +194,6 @@ function LandingPage() {
         </div>
 
         <section className="landing-hero">
-          <div className="landing-eyebrow">
-            <span className="landing-eyebrow-dot" />
-            Generate isekai worlds with dynamic context and persistent states!
-          </div>
 
           <h1 className="landing-h1">
             Immerse

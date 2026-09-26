@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { startRender, resetCanvas } from './services/render.js';
-import './App.css';
+import { startRender, resetCanvas } from '../services/render'
+import '../react-app/App.css'
 
 const ICON_STROKE = 1.75;
 
@@ -281,24 +281,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Features */}
-              <div className="sim-cards">
-                <div className="sim-box" style={{ width: 160, height: 16, margin: '0 auto 32px' }} />
-                <div className="sim-grid">
-                  {[0, 1, 2].map((i) => (
-                    <div key={i} className="sim-card">
-                      <div className="sim-box" style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--observed-soft)' }} />
-                      <div className="sim-box dark" style={{ width: '75%', height: 14 }} />
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <div className="sim-box" style={{ width: '100%', height: 10 }} />
-                        <div className="sim-box" style={{ width: '83%', height: 10 }} />
-                        <div className="sim-box" style={{ width: '66%', height: 10 }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Table */}
               <div className="sim-table-wrap">
                 <div className="sim-table">
@@ -342,6 +324,29 @@ function App() {
             </div>
           </div>
         </main>
+      </div>
+
+      <div id="main-canvas">
+        {/* Features */}
+        <div className="sim-cards">
+          <div className="sim-box" style={{ width: 160, height: 16, margin: '0 auto 32px' }} />
+          <div className="sim-grid">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="sim-card">
+                <div className="sim-box" style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--observed-soft)' }} />
+                <div className="sim-box dark" style={{ width: '75%', height: 14 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div className="sim-box" style={{ width: '100%', height: 10 }} />
+                  <div className="sim-box" style={{ width: '83%', height: 10 }} />
+                  <div className="sim-box" style={{ width: '66%', height: 10 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <canvas id="render-canvas">
+
+        </canvas>
       </div>
 
       {/* ── Trajectory ── */}

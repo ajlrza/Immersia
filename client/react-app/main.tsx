@@ -1,8 +1,8 @@
 import './index.css'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import LandingPage from '../LandingPage'
-import App from '../App'
+import LandingPage from '../react-app/LandingPage'
+import App from '../react-app/App'
 import { createBrowserRouter, redirect } from "react-router";
 import type { LoaderFunction, LoaderFunctionArgs } from "react-router";
 import { RouterProvider } from "react-router/dom";
