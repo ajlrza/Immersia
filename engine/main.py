@@ -17,6 +17,7 @@ app = FastAPI()
 OBSERVED = TopicPartition('OBSERVED', 0)
 UNOBSERVED = TopicPartition('UNOBSERVED', 0)
 MISC = TopicPartition('MISC', 0)
+MODEL_CACHE: str
 
 producer = KafkaProducer(bootstrap_servers='localhost:9092')
 

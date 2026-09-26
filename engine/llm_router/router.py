@@ -1,15 +1,20 @@
 # ENGINE MODULES
 from llm_router.storage import store
 from engine_dataclasses import main_dc
+from engine import main
 
 # NATIVE MODULES - TYPES 
 import typing, types
+from collections.abc import Callable
 
 # NATIVE MODULES - ROUTING 
 import orjson, threading, asyncio
 
 # NATIVE MODULES - NETWORK
 import requests, websockets, base64, os
+
+# THIRD PARTY MODULES - HF
+from transformers import AutoTokenizer, TokenizersBackend, SentencePieceBackend
 
 UNIVERSAL_ENDPOINT = "/v1/chat/completions"
 STORE_PATH = "/storage/store.json"
@@ -88,6 +93,30 @@ async def ReadRouterStatus(status: str = None, layer: str = None) -> bool:
     lock.release()
     return True
 
+def ModelValidator(Model: str) -> TokenizersBackend | SentencePieceBackend:
+    Tokenizer: any
+
+    if (isinstance(Model, str) and Model.split(" ")):
+        Model = Model.replace(" ", "-")
+
+    if (Model.isupper):
+        Model.lower()
+
+    if (Model not in store.MODEL_CATALOG):
+
+        try:
+
+            if (AutoTokenizer.from_pretrained(Model)):
+                Tokenizer = AutoTokenizer.from_pretrained(Model)
+
+        except Exception as e:
+            print(e)
+            print("Error, Model may be unknown or custom, please input the access credential")
+            # Make sure we can support any if they allow us to
+
+    Tokenizer = AutoTokenizer.from_pretrained(Model)
+    
+    return Tokenizer
 
 class CatalogChecker:
 
@@ -216,11 +245,49 @@ async def CallAPI(endpoint: str) -> main_dc.EnginePayload:
     encoded_content = data["content"]
     decoded_code = base64.b64decode(encoded_content).decode("utf-8")
 
-def Broadcast(Payload: main_dc.EnginePayload | main_dc.PromptPayload):
+def BroadcastMessage(Model: str, tokens_length: int) -> typing.Literal['RISKY', 'POTENTIAL'] | typing.Literal[False]:
+    
+    checked_catalog: main_dc.APIConfig = CatalogCheck.__contains__(Model)
 
-    if len(Payload.Prompt() > 10000):
-        # Broadcast who can handle ts
-        pass
+    if (not checked_catalog):
+        return False
+
+    if (checked_catalog.Window < tokens_length):
+        return "RISKY"
+
+    return "POTENTIAL"
+
+def BroadcastListener(func: Callable, tokens_length: int):
+
+    return  {
+        'OPENAI': func('OPENAI', tokens_length),
+        'ANTHROPIC': func('ANTHROPIC', tokens_length), 
+        'GOOGLE': func('GOOGLE', tokens_length),
+        'MISTRAL': func('MISTRAL', tokens_length),
+        'COHERE': func('COHERE', tokens_length),
+        'PERPLEXITY': func('PERPLEXITY', tokens_length),
+        'OPENROUTER': func('OPENROUTER', tokens_length),
+        'GROQ': func('GROQ', tokens_length),
+        'TOGETHER': func('TOGETHER', tokens_length),
+        'HF': func('HF', tokens_length),
+        'DEEPINFRA': func('DEEPINFRA', tokens_length),
+        'AZUREOAI': func('AZUREOAI', tokens_length),
+        'AWS': func('AWS', tokens_length),
+        'VERTEX': func('VERTEX', tokens_length)
+    }
+
+def Broadcast(Payload: main_dc.PromptPayload):
+
+    validated_model = ModelValidator(Payload.Model)
+    token_length: int
+
+    if (validated_model):
+        token_length = validated_model.encode(Payload.Prompt)
+    else:
+        custom_bpe: object # Soon
+
+    sent_broadcast = BroadcastMessage(Payload.Model, token_length)
+    
 
 async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | types.Callable:
 

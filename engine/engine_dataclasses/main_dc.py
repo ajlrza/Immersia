@@ -12,10 +12,10 @@ class InteractionMetadata(slots=True):
 
 @dataclass
 class EnginePayload(slots=True):
-    Action:     str
-    Avatar:     str
-    Position:   str
-    World:      str
+    Action:     object
+    Avatar:     object
+    Position:   object
+    World:      object
     Metadata:   InteractionMetadata
 
 @dataclass
