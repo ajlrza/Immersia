@@ -1,7 +1,7 @@
 import os
-from './dataclasses.py' import enginePayload
+from engine.engine_dataclasses import main_dc, lmdb_dc
 
-def get_data(payload: object):
+def get_data(payload: lmdb_dc.Interaction):
     pass
 
 

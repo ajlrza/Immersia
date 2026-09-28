@@ -10,7 +10,9 @@ import re
 import lmdb, orjson, threading
 
 # ENGINE MODULES
-from engine.engine_dataclasses.lmdb_dc import Interaction
+from engine.engine_dataclasses import lmdb_dc
+
+ROOT_PATH = "/"
 
 class KVDatabase:
     """LMDB Key-Value Database for faster reading and persistent reading"""
@@ -35,15 +37,19 @@ class KVDatabase:
             self.join()
             return self.result
 
-    def DbWrite(self, data: Interaction) -> None:
+    def DbWrite(self, data: lmdb_dc.Interaction) -> None:
 
         # Separated index from DbRead
         encoded_write_idx: int = data.Metadata.GraphMasterID
-        encoded_write_data: list[object] = [asdict(Interaction.Action), asdict(Interaction.Avatar), asdict(Interaction.Position), asdict(Interaction.World)] 
+        encoded_write_data: list[object] = [
+        asdict(lmdb_dc.Interaction.Action), 
+        asdict(lmdb_dc.Interaction.Avatar), 
+        asdict(lmdb_dc.Interaction.Position), 
+        asdict(lmdb_dc.Interaction.World)] 
          
         with self.db.begin(write=True) as transaction:
 
-            if (isinstance(idx, str) and idx.isalnum() == False):
+            if (isinstance(data, str) and idx.isalnum() == False):
                 encoded_write_idx = idx.encode()
             elif (isinstance(idx, int)):
                 encoded_write_idx = idx.to_bytes(length=8, byteorder="big")
@@ -72,7 +78,9 @@ class KVDatabase:
 
             transaction.put(encoded_write_idx, encoded_write_data)
 
-            print(f"Episode Buffer - {idx} written successfully")
+            print(f"Interaction Data written sucessfully.")
+            print(f"Affected states: {data.Metadata.StatesAffected}")
+            print(f"Interaction occured at: {data.Metadata.EventWhen}")
 
     def DbRead(self, idx: int) -> dict[str, any]:
 
@@ -150,3 +158,15 @@ class KVDatabase:
 
         self.db.close()
         print("LMDB closed, no longer writing or reading data.")
+
+DB: KVDatabase 
+
+def StartDB() -> bool:
+
+    global DB
+    DB = KVDatabase(ROOT_PATH)
+
+    if (isinstance(DB, KVDatabase)):
+        return True
+    else:
+        return False
