@@ -1,7 +1,7 @@
 from engine.engine_dataclasses import main_dc
 
 # NATIVE MODULES - OS-LEVEL
-import threading, os
+import threading, os, multiprocessing
 
 # THIRD PARTY - KAFKA
 from kafka import KafkaConsumer, KafkaProducer
@@ -27,6 +27,8 @@ consumer.assign([OBSERVED, UNOBSERVED, MISC])
 consumer.poll
 
 PID: int = os.getpid
+current = multiprocessing.current_process
+children = multiprocessing.active_children
 
 CPU_LEVELS: set[str] = ["ONE_CORE", "MULTIPLE_CORES"]
 CPU_COUNT: int = os.cpu_count() or 1
@@ -42,14 +44,16 @@ elif (CPU_COUNT > 1):
 
 ResourcePool: object
 
-def ResourcePoolManager(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
-    pass
-
 # OS-level, RAW IMPLEMENTATION IN PYTHON
 
 ## Entity-Data Actor: ResourcePoolManager
+def ResourcePoolManager(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
+    pass
 
 ## Functions to initiate resources pool
+def BeginPooling():
+    pass
+
 
 ## Functions to take control of the resources pool
 
