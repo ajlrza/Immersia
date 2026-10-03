@@ -1,5 +1,5 @@
 import os
-from typing import Literal
+import typing
 from dataclasses import dataclass, fields
 
 @dataclass
@@ -36,7 +36,7 @@ class Data(slots=True):
 
 @dataclass
 class ContextWindow(slots=True):
-    Tier:   Literal["Free", "Commercial", "Enterprise", "Pro", "Community"] 
+    Tier:   typing.Literal["Free", "Commercial", "Enterprise", "Pro", "Community"] 
     Amount: int
 
 @dataclass
@@ -46,15 +46,17 @@ class OperationStatus(slots=True):
 
 @dataclass
 class APIConfig(slots=True):
-    Window: ContextWindow
-    Status: OperationStatus
-    RPM:    int
-    PREFIX: str
+    Call: typing.Callable
+    Window:     ContextWindow
+    Status:     OperationStatus
+    RPM:        int
+    Prefix:     str
+    Endpoint:   str
 
 @dataclass
 class RouterStatus(slots=True):
-    Status:         Literal["NOT ROUTING", "ROUTING", "ROUTED"]
-    Layer:          Literal["ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"]
+    Status:         typing.Literal["NOT ROUTING", "ROUTING", "ROUTED"]
+    Layer:          typing.Literal["ENTRY", "CHECK", "LOAD", "UPDATE", "API", "RESPONSE"]
 
 @dataclass
 class EngineResponse:
@@ -68,3 +70,7 @@ class PacketHeader(slots=True):
     Type:    int   
     Length:  int  
     ID:      int 
+
+@dataclass
+class ResourcePool(slots=True):
+    

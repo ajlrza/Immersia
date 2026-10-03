@@ -217,7 +217,36 @@ async def CheckAPI(model: str = None) -> typing.Literal['UP', 'DOWN']:
     
     return 'UP'
 
-async def CallAPI(endpoint: str) -> main_dc.EnginePayload:
+async def CallAPI(model: str, endpoint: str) -> main_dc.EnginePayload:
+
+    if (endpoint != store.CONFIG_CATALOG[model]['Endpoint']):
+        print("Possibly invalid or outdated endpoint, sending request to check..")
+
+        try:
+            response = requests.get(f"https://{model.lower}.com/docs")
+
+            matching = 'endpoint'
+            data = response.content.decode()
+            new_endpoint = data.rfind(matching)
+
+            if (isinstance(new_endpoint)):
+                endpoint: str = new_endpoint
+
+                updated_endpoint:  bool | orjson.JSONDecodeError | AssertionError = UpdatePyStore(
+                    Config='Endpoint',
+                    Value=endpoint,
+                    Model=model
+                )
+
+                if (updated_endpoint):
+                    print("Successfully updated new endpoint")
+                else:
+                    print("Cannot update new endpoint, saving new endpoint to cache and saved later.")
+            else:
+                print("Error, no new endpoint found, defaulting..")
+
+        except:
+            print("Model possibly not available, default to in-house LLM or switch to a new model.")
 
     try:
 
@@ -241,9 +270,6 @@ async def CallAPI(endpoint: str) -> main_dc.EnginePayload:
 
     except:
         pass
-
-    encoded_content = data["content"]
-    decoded_code = base64.b64decode(encoded_content).decode("utf-8")
 
 def BroadcastMessage(Model: str, tokens_length: int) -> typing.Literal['RISKY', 'POTENTIAL'] | typing.Literal[False]:
     
