@@ -1,6 +1,6 @@
 import os
-import typing
-from dataclasses import dataclass, fields
+import typing, types
+from dataclasses import dataclass, field
 
 @dataclass
 class InteractionMetadata(slots=True):
@@ -11,11 +11,41 @@ class InteractionMetadata(slots=True):
     EngineStatus:   str # Engine status as of this interaction
 
 @dataclass
+class GeneralState(slots=True):
+    StateLinker:    dict[str, str | object]
+    StateOne:       str
+    StateTwo:       str
+    StateThree:     str
+
+@dataclass
+class AvatarState(slots=True):
+    StateLinker:    dict[str, str | object]
+    EmotionOne:     str
+    EmotionTwo:     str
+    EmotionThree:   str
+
+@dataclass
+class PositionState(slots=True):
+    StateLinker: dict[str, int | object]
+    x:           int
+    y:           int
+    z:           int
+
+@dataclass
+class WorldState(slots=True):
+    StateLinker:    dict[str, int | object]
+    Gravity:        int
+    Force:          int
+    Torque:         int
+    Mass:           int
+    Acceleration:   int
+
+@dataclass
 class EnginePayload(slots=True):
-    Action:     object
-    Avatar:     object
-    Position:   object
-    World:      object
+    General:    GeneralState
+    Avatar:     AvatarState
+    Position:   PositionState
+    World:      WorldState
     Metadata:   InteractionMetadata
 
 @dataclass
