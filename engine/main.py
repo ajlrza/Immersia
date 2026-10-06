@@ -59,7 +59,6 @@ async def route_payloads(
             "status_code": 200,
             "message": "Engine successfully processed payload.",
             "data": {
-                "Action": payload_router.Action,
                 "Avatar": payload_router.Avatar,
                 "Position": payload_router.Position,
                 "World": payload_router.World,
