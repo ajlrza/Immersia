@@ -1,0 +1,1 @@
+FROM nodejs as prod-server-node
