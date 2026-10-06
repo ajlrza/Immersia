@@ -1,16 +1,18 @@
 # THIRD PARTY - HUGGINGFACE
-import json, requests, base64
+import orjson, json, requests, base64, struct, os, typing, types
 from huggingface_hub import HfApi
 from huggingface_hub import login, DeviceCodeError
 
 # ENGINE MODULE
 from engine_dataclasses.main_dc import (EnginePayload, PromptPayload)
+from engine.llm.state_construction import constructor
 
 # thinking of getting inspiration from IPv6 neighbor solicit and broadcasting
 
 # Build a unified middleware service hosted on different soon so if errors occur it wont hit the app
 
-headers = {"Authorization": os.getenv("API_CALLER_TOKEN")} 
+
+TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwords:[list],charactersname:[list]ifany->worldconnect[theme,characters,keywords]"
 
 async def api_call(
     user_states: EnginePayload = None, 
@@ -25,15 +27,6 @@ async def api_call(
   if (doRender):
     image: bytearray = []
   
-#  try:
-#    login(api_key)
-#    hf_api = HfApi()
-#
-#  except ValueError:
-#    return ValueError
-  
-#  except DeviceCodeError:
-#    return DeviceCodeError
   
 async def openai_call(
     endpoint: str,
@@ -81,7 +74,7 @@ async def anthropic_call(
     first_prompt: PromptPayload = None, 
     api_key: str = None, 
     doRender: bool = False
-)  -> json:
+)  -> orjson:
   
   sdk_api: object
   hf_api: object
@@ -115,35 +108,65 @@ async def anthropic_call(
   pass
   
 async def google_call(
+    model: str,
     endpoint: str,
+    api_key: str,
     user_states: EnginePayload = None, 
     first_prompt: PromptPayload = None, 
-    api_key: str = None, 
     doRender: bool = False
-) -> json:
-  
-  sdk_api: object
-  hf_api: object
+) -> dict[str, typing.Any] | dict[str, bool]:
+
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
+
+  headers = {
+    "Content-Type": "application/json",
+    "x-goog-api-key": api_key
+  }
+
+  payload = {
+    "contents": [
+        {
+          "parts": [
+              {
+                "text": f"generatewrldsettng->'{content}'->text",
+                "text": f"follow->{TOON_TEMPLATE}->imgrep&3bgimgasprmpt",
+                "text": "dontoverdoany"}
+          ]
+        }
+    ],
+    "generationConfig": {
+      "responseModalities": ["TEXT","IMAGE"]
+    }
+  }
+
+  # Soon
+  #binary_obj: struct.Struct = struct.pack(headers, payload)
+
   try:
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+    response = requests.get(
+      url=endpoint, 
+      headers=headers,
+      data=orjson.dumps(payload)
+      )
 
-    if data.status == 200:
+    data = orjson.loads(response.raw())
 
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
+    if (isinstance(data, dict[str, any])):
+      data = data["content"]
+    elif (not isinstance(data, object)):
+      return {"Error": "orjson parsing"}
         
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
+    if (content == first_prompt):
+      constructor.setting_state_assemble(encoded_content)
+      data = d
+    elif (content == user_states):
+      constructor.overall_state_assemble(user_states, base64.b64decode(encoded_content).decode("utf-8"))
+
+    return data
 
   except:
-        pass
+      return {"Error": "api request"}
 
   encoded_content = data["content"]
   decoded_code = base64.b64decode(encoded_content).decode("utf-8")

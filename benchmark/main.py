@@ -10,7 +10,7 @@ tokenizer = tiktoken.get_encoding("cl100k_base")
 rouge_metric = load("rouge")
 bleu_metric = load("bleu")
 
-TEMPLATE = "->compressworldusing->worldtheme:list,generalkwords:list,charactersname[list]->connecttoworld[list]:[usearrow]"
+TEMPLATE = "->compressworldusing->wrld:list,kwords:list,charsname[list]->connection[list]:[usearrow]"
 
 SOURCE_TRUTH = "I want a world where I am able to have a harem of 5 anime girls and they all love me so like this is a slice of life type of anime"
 

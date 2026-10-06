@@ -54,7 +54,6 @@ def ResourcePoolManager(payload: list[main_dc.EnginePayload, main_dc.PerfPayload
 def BeginPooling():
     pass
 
-
 ## Functions to take control of the resources pool
 
 ## Functions to standardize resources pool 

@@ -3,12 +3,12 @@ import typing, types
 from dataclasses import dataclass, field
 
 @dataclass
-class InteractionMetadata(slots=True):
-    EventWhen:      str
-    GraphMasterID:  int # Master identifier responsible for placing the interaction data
-    GraphNodes:     int # How many graph nodes, used for optimizing and storing properly
-    StatesAffected: int # How many states affected, used also for optimizing and compress
-    EngineStatus:   str # Engine status as of this interaction
+class PromptPayload(slots=True):
+    Metadata:   object
+    Prompt:     str
+    Key:       str | None
+    Model:     str | None
+
 
 @dataclass
 class GeneralState(slots=True):
