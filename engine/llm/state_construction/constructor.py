@@ -1,8 +1,13 @@
-from engine.engine_dataclasses import main_dc
+from engine.engine_dataclasses import main_dc, lmdb_dc
 from engine.db import db
 import PIL.Image, re, types, typing
 
-PIL.ImageFile
+FILTER = "/^\s*\*?\*?\s*(\w+):\*?\*?\s*([\s\S]*?)(?=(?:^\s*\*?\*?\s*\w+:)|(?:^\s*\*\*|\z))/gm"
+WORLD_LOGS_PATH = "/logs/"
+GENSTATE_STORAGE_PATH = "/storage/genstate/"
+AVTSTATE_STORAGE_PATH = "/storage/avtstate/"
+PSTSTATE_STORAGE_PATH = "/storage/pst/"
+WORLDSTATE_STORAGE_PATH = "/storage/world/"
 
 # An assembler 
 def overall_state_assemble(new_payload: main_dc.EnginePayload, image_byte: str) -> bool:
@@ -14,11 +19,10 @@ def overall_state_assemble(new_payload: main_dc.EnginePayload, image_byte: str) 
 
     return True
 # General State Components Assembly
-def general_state_assemble(gen_state: main_dc.GeneralState):
+def general_state_assemble(gen_state_text: str, metadata: lmdb_dc.InteractionMetadata):
     gen_states: dict[str, any] | None
-    filter = "/^\s*\*?\*?\s*(\w+):\*?\*?\s*([\s\S]*?)(?=(?:^\s*\*?\*?\s*\w+:)|(?:^\s*\*\*|\z))/gm"
     
-    capture_settings = re.fullmatch(gen_state, filter)
+    capture_settings = re.fullmatch(gen_state_text, FILTER)
 
     if (isinstance(capture_settings, types.NoneType)):
 
@@ -27,18 +31,17 @@ def general_state_assemble(gen_state: main_dc.GeneralState):
     avt_states: dict[str, str | any] = capture_settings.groupdict()
 
     # graph file soon
-    with open("./world/gen_state.txt", "w", encoding="utf-8") as file:
+    with open(GENSTATE_STORAGE_PATH + f'{metadata.EventWhen}', "w", encoding="utf-8") as file:
         file.write(gen_states)
     file.close()
 
     return True
 
 # Avatar State Components Assembly
-def avatar_state_assemble(avt_state: main_dc.AvatarState):
+def avatar_state_assemble(avt_state_text: str, metadata: lmdb_dc.InteractionMetadata):
     avt_states: dict[str, any] | None
-    filter = "/^\s*\*?\*?\s*(\w+):\*?\*?\s*([\s\S]*?)(?=(?:^\s*\*?\*?\s*\w+:)|(?:^\s*\*\*|\z))/gm"
-    
-    capture_settings = re.fullmatch(avt_state, filter)
+
+    capture_settings = re.fullmatch(avt_state_text, FILTER)
 
     if (isinstance(capture_settings, types.NoneType)):
 
@@ -47,19 +50,18 @@ def avatar_state_assemble(avt_state: main_dc.AvatarState):
     avt_states: dict[str, str | any] = capture_settings.groupdict()
 
     # graph file soon
-    with open("./world/avt_state.txt", "w", encoding="utf-8") as file:
+    with open(AVTSTATE_STORAGE_PATH + f'{metadata.EventWhen}', "w", encoding="utf-8") as file:
         file.write(avt_states)
     file.close()
 
     return True
 
 # Position State Components Assembly
-def position_state_assemble(pst_state: main_dc.PositionState):
+def position_state_assemble(pst_state_text: str, metadata: lmdb_dc.InteractionMetadata):
     
     pst_states: dict[str, any] | None
-    filter = "/^\s*\*?\*?\s*(\w+):\*?\*?\s*([\s\S]*?)(?=(?:^\s*\*?\*?\s*\w+:)|(?:^\s*\*\*|\z))/gm"
     
-    capture_settings = re.fullmatch(pst_state, filter)
+    capture_settings = re.fullmatch(pst_state_text, FILTER)
 
     if (isinstance(capture_settings, types.NoneType)):
 
@@ -68,7 +70,7 @@ def position_state_assemble(pst_state: main_dc.PositionState):
     pst_states: dict[str, str | any] = capture_settings.groupdict()
 
     # graph file soon
-    with open("./world/pst_state.txt", "w", encoding="utf-8") as file:
+    with open(PSTSTATE_STORAGE_PATH + f'{metadata.EventWhen}', "w", encoding="utf-8") as file:
         file.write(pst_states)
     file.close()
 
@@ -76,25 +78,24 @@ def position_state_assemble(pst_state: main_dc.PositionState):
 
 
 # World State Components Assembly
-def world_state_assemble(world_state: main_dc.WorldState):
+def world_state_assemble(world_state_text: str, metadata: lmdb_dc.InteractionMetadata):
 
     world_setting: dict[str, any] | None
-    filter = "/^\s*\*?\*?\s*(\w+):\*?\*?\s*([\s\S]*?)(?=(?:^\s*\*?\*?\s*\w+:)|(?:^\s*\*\*|\z))/gm"
     
-    capture_settings = re.fullmatch(world_state, filter)
+    capture_settings = re.fullmatch(world_state_text, FILTER)
 
     if (isinstance(capture_settings, types.NoneType)):
 
-        with open("./logs/world.txt", "w", encoding="utf-8") as file:
-            file.write(world_state)
+        with open(WORLD_LOGS_PATH, "w", encoding="utf-8") as file:
+            file.write(world_state_text)
         file.close()
 
         return False
 
     world_setting: dict[str, str | any] = capture_settings.groupdict()
 
-    with open("./logs/world.txt", "w", encoding="utf-8") as file:
-        file.write(world_state)
+    with open(WORLDSTATE_STORAGE_PATH + f'{metadata.EventWhen}', "a", encoding="utf-8") as file:
+        file.write(world_state_text)
     file.close()
 
     # graph file soon
@@ -104,12 +105,11 @@ def world_state_assemble(world_state: main_dc.WorldState):
 
     return True
 
-def setting_state_assemble(api_response: str) -> bool:
+def setting_state_assemble(api_response: str, metadata: lmdb_dc.InteractionMetadata) -> bool:
 
     world_setting: dict[str, any] | None
-    filter = "/^\s*\*?\*?\s*(\w+):\*?\*?\s*([\s\S]*?)(?=(?:^\s*\*?\*?\s*\w+:)|(?:^\s*\*\*|\z))/gm"
     
-    capture_settings = re.fullmatch(api_response, filter)
+    capture_settings = re.fullmatch(api_response, FILTER)
 
     if (isinstance(capture_settings, types.NoneType)):
 
@@ -121,7 +121,7 @@ def setting_state_assemble(api_response: str) -> bool:
 
     world_setting: dict[str, str | any] = capture_settings.groupdict()
 
-    with open("./logs/world.txt", "w", encoding="utf-8") as file:
+    with open(WORLD_LOGS_PATH + f'{metadata.EventWhen}', "w", encoding="utf-8") as file:
         file.write(api_response)
     file.close()
 
