@@ -12,22 +12,35 @@ from engine.llm.state_construction import constructor
 # Build a unified middleware service hosted on different soon so if errors occur it wont hit the app
 
 
-TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwords:[list],charactersname:[list]ifany->worldconnect[theme,characters,keywords]"
+WORLD_BUILD_TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwords:[list],charactersname:[list]ifany->worldconnect[theme,characters,keywords]"
+WORLD_PROGRESS_TOON_TEMPLATE = "->compressworldusing->generalstate:str[state1,2,3]mcavatarstate:str[emotion1,2,3],mcpositionstate:float[x,y,z],worldstate->[events->variables]"  
+STANDARD_HEADERS = {'Content-Type': 'application/json'}
 
-async def api_call(
-    user_states: EnginePayload = None, 
-    first_prompt: PromptPayload = None, 
-    api_key: str = None, 
-    doRender: bool = False
-) -> json:
-  
-  sdk_api: object
-  hf_api: object
+async def response_handler(endpoint: str, headers: str):
+    
+    try:
 
-  if (doRender):
-    image: bytearray = []
-  
-  
+      response = requests.get(
+        url=endpoint, 
+        headers=headers,
+        timeout=5)
+
+      if (response.elapsed.total_seconds() >= 1):
+        print("Response timeout after 5 seconds.")
+
+      if response.status_code == 200:
+
+          data = orjson.loads(response.raw)
+
+          if (isinstance(data, dict[str, any])):
+            data = data["content"]
+          elif (not isinstance(data, object)):
+            return {"Error": "orjson parsing"}
+          return data
+          
+    except:
+      return {"Error": "response"}
+
 async def openai_call(
     endpoint: str,
     user_states: EnginePayload = None, 
@@ -39,34 +52,10 @@ async def openai_call(
   sdk_api: object
   hf_api: object
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
-
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  response = response_handler(endpoint, exclusive_headers)
 
 async def anthropic_call(
     endpoint: str,
@@ -78,34 +67,11 @@ async def anthropic_call(
   
   sdk_api: object
   hf_api: object
-  try:
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  response = response_handler(endpoint, exclusive_headers)
   
 async def google_call(
     model: str,
@@ -118,18 +84,13 @@ async def google_call(
 
   content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  headers = {
-    "Content-Type": "application/json",
-    "x-goog-api-key": api_key
-  }
-
   payload = {
     "contents": [
         {
           "parts": [
               {
                 "text": f"generatewrldsettng->'{content}'->text",
-                "text": f"follow->{TOON_TEMPLATE}->imgrep&3bgimgasprmpt",
+                "text": f"follow->{WORLD_BUILD_TOON_TEMPLATE}->imgrep&3bgimgasprmpt",
                 "text": "dontoverdoany"}
           ]
         }
@@ -139,42 +100,15 @@ async def google_call(
     }
   }
 
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
+
   # Soon
   #binary_obj: struct.Struct = struct.pack(headers, payload)
 
-  try:
+  response = response_handler(endpoint, exclusive_headers)
 
-    response = requests.get(
-      url=endpoint, 
-      headers=headers,
-      data=orjson.dumps(payload)
-      )
-
-    data = orjson.loads(response.raw())
-
-    if (isinstance(data, dict[str, any])):
-      data = data["content"]
-    elif (not isinstance(data, object)):
-      return {"Error": "orjson parsing"}
-        
-    if (content == first_prompt):
-      constructor.setting_state_assemble(encoded_content)
-      data = d
-    elif (content == user_states):
-      constructor.overall_state_assemble(user_states, base64.b64decode(encoded_content).decode("utf-8"))
-
-    return data
-
-  except:
-      return {"Error": "api request"}
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def mistral_call(
     endpoint: str,
@@ -183,37 +117,15 @@ async def mistral_call(
     api_key: str = None, 
     doRender: bool = False
 ) -> json:
+
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
+
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
   
-  sdk_api: object
-  hf_api: object
-  try:
+  response = response_handler(endpoint, exclusive_headers)
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
-
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def cohere_call(
     endpoint: str,
@@ -223,37 +135,14 @@ async def cohere_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def perxplexity_call(
     endpoint: str,
@@ -263,37 +152,14 @@ async def perxplexity_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def openrouter_call(
     endpoint: str,
@@ -303,37 +169,14 @@ async def openrouter_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def groq_call(
     endpoint: str,
@@ -343,37 +186,14 @@ async def groq_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def together_call(
     endpoint: str,
@@ -383,37 +203,14 @@ async def together_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def hf_call(
     endpoint: str,
@@ -423,37 +220,14 @@ async def hf_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def deepinfra_call(
     endpoint: str,
@@ -463,37 +237,14 @@ async def deepinfra_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def azure_call(
     endpoint: str,
@@ -503,37 +254,14 @@ async def azure_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response
 
 async def aws_call(
     endpoint: str,
@@ -543,38 +271,14 @@ async def aws_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
-
+  return response
 async def vertex_call(
     endpoint: str,
     user_states: EnginePayload = None, 
@@ -583,34 +287,11 @@ async def vertex_call(
     doRender: bool = False
 ) -> json:
   
-  sdk_api: object
-  hf_api: object
+  content: EnginePayload | PromptPayload | None = user_states or first_prompt or None
 
-  try:
+  exclusive_headers = {}
+  exclusive_headers |= STANDARD_HEADERS
 
-    response = requests.get(endpoint, headers=headers)
-    data = response.json()
+  response = response_handler(endpoint, exclusive_headers)
 
-    if data.status == 200:
-
-        encoded_content = data["content"]
-        decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-        
-        return {
-            "Action": "",
-            "Avatar": "",
-            "Position": "",
-            "World": "",
-            "Metadata": {}
-        }
-
-  except:
-        pass
-
-  encoded_content = data["content"]
-  decoded_code = base64.b64decode(encoded_content).decode("utf-8")
-
-  if (doRender):
-    image: bytearray = []
-
-  pass
+  return response

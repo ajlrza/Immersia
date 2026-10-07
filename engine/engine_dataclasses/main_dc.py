@@ -1,7 +1,7 @@
 import os
 import typing, types
 from dataclasses import dataclass, field
-
+from engine.engine_dataclasses import lmdb_dc
 @dataclass
 class PromptPayload(slots=True):
     Metadata:   object
@@ -34,11 +34,8 @@ class PositionState(slots=True):
 @dataclass
 class WorldState(slots=True):
     StateLinker:    dict[str, int | object]
-    Gravity:        int
-    Force:          int
-    Torque:         int
-    Mass:           int
-    Acceleration:   int
+    Event:          str
+    Variables:      dict[str, str]
 
 @dataclass
 class EnginePayload(slots=True):
@@ -46,7 +43,7 @@ class EnginePayload(slots=True):
     Avatar:     AvatarState
     Position:   PositionState
     World:      WorldState
-    Metadata:   InteractionMetadata
+    Metadata:   lmdb_dc.InteractionMetadata
 
 @dataclass
 class PromptPayload(slots=True):

@@ -44,11 +44,8 @@ export type positionStateImage = {
 
 export type worldState = {
     StateLinker: worldState,
-    Gravity: number,
-    Force: number,
-    Torque: number,
-    Mass: number,
-    Acceleration: number
+    Event: string,
+    Variables: Record<string, string>
 }
 
 export type worldStateImage = {
