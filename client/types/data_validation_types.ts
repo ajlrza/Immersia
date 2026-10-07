@@ -59,5 +59,4 @@ export type strStatesValid = {
 
 export type numStatesValid = {
     "pst": boolean,
-    "world": boolean
 }

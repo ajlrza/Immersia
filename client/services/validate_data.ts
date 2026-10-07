@@ -92,11 +92,6 @@ export function checkMainStates(states: enginePayload): Record<string, mainValid
         "pst": numValidate.validate(states.Position.x)
                && numValidate.validate(states.Position.y)
                && numValidate.validate(states.Position.z),
-        "world": numValidate.validate(states.World.Acceleration)
-                 && numValidate.validate(states.World.Force)
-                 && numValidate.validate(states.World.Gravity)
-                 && numValidate.validate(states.World.Mass)
-                 && numValidate.validate(states.World.Torque)
     }
 
     const linkerValid: linkerValid = {
