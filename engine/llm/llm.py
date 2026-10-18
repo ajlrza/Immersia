@@ -16,6 +16,33 @@ WORLD_BUILD_TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwor
 WORLD_PROGRESS_TOON_TEMPLATE = "->compressworldusing->generalstate:str[state1,2,3]mcavatarstate:str[emotion1,2,3],mcpositionstate:float[x,y,z],worldstate->[events->variables]"  
 STANDARD_HEADERS = {'Content-Type': 'application/json'}
 
+def dynamic_state_gen(keys_name: list[str], vals_hints: list[str]):
+
+  '''
+    A dynamic state generator, used for a custom
+    state from user and to be filled by the LLM generation
+    Keys: Any string
+    Vals: Type hints for the keys
+  '''
+
+  if len(keys_name) != len(vals_hints):
+    return "keys and val hints must have the same length"
+      
+  return {k: str(v) for k, v in zip(keys_name, vals_hints)}
+
+def openai_template():
+
+  return {
+    "model": None,
+    "messages": [],
+    "response_format": {
+        "type": "json_object",
+        "json_schema": {"name": None, "schema": {}}
+    },
+    "stream": False
+    }
+
+
 async def response_handler(endpoint: str, headers: str):
     
     try:
