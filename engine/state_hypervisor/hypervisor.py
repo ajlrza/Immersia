@@ -20,11 +20,8 @@ MISC = TopicPartition('MISC', 0)
 MODEL_CACHE: str
 
 producer = KafkaProducer(bootstrap_servers='localhost:9092')
-
 consumer = KafkaConsumer(bootstrap_servers='localhost:9092')
-
 consumer.assign([OBSERVED, UNOBSERVED, MISC])
-consumer.poll
 
 PID: int 
 current: object # Multiprocessing base process
@@ -85,3 +82,29 @@ def BeginPooling():
 ## Functions to create, delete,store, and change resources pool
 
 ## Functions to send to Kafka Topics depending on the resource pool manager
+
+producer.init_transactions()
+
+def SendBackgroundStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
+
+    producer.begin_transaction()
+    sent_state_data = producer.send('UNOBSERVED', payload)
+    producer.commit_transaction()
+
+    return sent_state_data
+
+def SendMainStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
+
+    producer.begin_transaction()
+    sent_state_data = producer.send('OBSERVED', payload)
+    producer.commit_transaction()
+
+    return sent_state_data
+
+def SendMiscStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
+
+    producer.begin_transaction()
+    sent_state_data = producer.send('MISC', payload)
+    producer.commit_transaction()
+
+    return sent_state_data
