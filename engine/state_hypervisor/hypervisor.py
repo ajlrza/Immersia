@@ -26,23 +26,47 @@ consumer = KafkaConsumer(bootstrap_servers='localhost:9092')
 consumer.assign([OBSERVED, UNOBSERVED, MISC])
 consumer.poll
 
-PID: int = os.getpid
-current = multiprocessing.current_process
-children = multiprocessing.active_children
+PID: int 
+current: object # Multiprocessing base process
+children: list[object] # List of current base processes
 
 CPU_LEVELS: set[str] = ["ONE_CORE", "MULTIPLE_CORES"]
-CPU_COUNT: int = os.cpu_count() or 1
-CPU_LEVEL: str | None = None 
 
-if (CPU_COUNT == 1):
-    print("Using default system level...")
-    CPU_LEVEL = "ONE_CORE"
+CPU_COUNT: int 
+CPU_LEVEL: str | None 
 
-elif (CPU_COUNT > 1):
-    print(f"Multiple cores detected, setting CPU_LEVEL to {"MULTPLE_CORES"}")
-    CPU_LEVEL = "MULTIPLE_CORES"
+CPU_ACTIVE: bool 
+GPU_ACTIVE: bool 
 
 ResourcePool: object
+
+def CpuStatsConfigurator() -> bool:
+
+    global CPU_ACTIVE
+    global GPU_ACTIVE
+    global PID
+    global current
+    global children
+    global CPU_COUNT
+    global CPU_LEVEL
+    
+    CPU_ACTIVE = True
+    GPU_ACTIVE= False
+    PID: int = os.getpid
+    current = multiprocessing.current_process()
+    children = multiprocessing.active_children()
+    CPU_COUNT = os.cpu_count() or 1
+
+    if (CPU_COUNT == 1):
+        print("Using default system level...")
+        CPU_LEVEL = "ONE_CORE"
+
+    elif (CPU_COUNT > 1):
+        print(f"Multiple cores detected, setting CPU_LEVEL to {"MULTPLE_CORES"}")
+        CPU_LEVEL = "MULTIPLE_CORES"
+
+    return True
+
 
 # OS-level, RAW IMPLEMENTATION IN PYTHON
 
