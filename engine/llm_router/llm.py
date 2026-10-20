@@ -11,13 +11,11 @@ from engine.llm.state_construction import constructor
 
 # Build a unified middleware service hosted on different soon so if errors occur it wont hit the app
 
-
 WORLD_BUILD_TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwords:[list],charactersname:[list]ifany->worldconnect[theme,characters,keywords]"
 WORLD_PROGRESS_TOON_TEMPLATE = "->compressworldusing->generalstate:str[state1,2,3]mcavatarstate:str[emotion1,2,3],mcpositionstate:float[x,y,z],worldstate->[events->variables]"  
 STANDARD_HEADERS = {'Content-Type': 'application/json'}
 
 def dynamic_state_gen(keys_name: list[str], vals_hints: list[str]):
-
   '''
     A dynamic state generator, used for a custom
     state from user and to be filled by the LLM generation
@@ -42,8 +40,34 @@ def openai_template():
     "stream": False
     }
 
+async def state_img_handler(state: str):
 
-async def response_handler(endpoint: str, headers: str):
+  import PIL
+
+  data: PIL.PngImagePlugin.PngImageFile
+
+  try:
+
+    response = requests.get(
+      url="",
+      headers=""
+      body=""
+    )
+
+    if response.status_code == 200:
+      data = PIL.ImageOpen(response.content)
+    elif response.status_code != 200:
+        return {"status": "status code not 200", "data": response.content.decode("utf-8")}
+
+  except Exception as e:
+    raise e
+
+  return data
+
+
+async def state_response_handler(endpoint: str, headers: str) -> dict[str, typing.Any] | None:
+
+    data: dict[str, typing.Any] = None
     
     try:
 
@@ -57,16 +81,20 @@ async def response_handler(endpoint: str, headers: str):
 
       if response.status_code == 200:
 
-          data = orjson.loads(response.raw)
-
+          loaded = orjson.loads(response.raw)
           if (isinstance(data, dict[str, any])):
-            data = data["content"]
+            data["state"] = loaded["content"]
+            data["state_img"] = state_img_handler(data)
           elif (not isinstance(data, object)):
-            return {"Error": "orjson parsing"}
-          return data
-          
-    except:
-      return {"Error": "response"}
+            return {"status": "Orjson invalid", "data": response.content.decode("utf-8")}
+
+      elif response.status_code != 200:
+          return {"status": "status code not 200", "data": response.content.decode("utf-8")}
+
+    except Exception as e:
+      raise e
+
+    return data
 
 async def openai_call(
     endpoint: str,
@@ -82,7 +110,7 @@ async def openai_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
 async def anthropic_call(
     endpoint: str,
@@ -98,7 +126,7 @@ async def anthropic_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
   
 async def google_call(
     model: str,
@@ -133,7 +161,7 @@ async def google_call(
   # Soon
   #binary_obj: struct.Struct = struct.pack(headers, payload)
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -150,7 +178,7 @@ async def mistral_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
   
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -167,7 +195,7 @@ async def cohere_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -184,7 +212,7 @@ async def perxplexity_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -201,7 +229,7 @@ async def openrouter_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -218,7 +246,7 @@ async def groq_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -235,7 +263,7 @@ async def together_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -252,7 +280,7 @@ async def hf_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -269,7 +297,7 @@ async def deepinfra_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -286,7 +314,7 @@ async def azure_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 
@@ -303,7 +331,7 @@ async def aws_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
 async def vertex_call(
@@ -319,6 +347,6 @@ async def vertex_call(
   exclusive_headers = {}
   exclusive_headers |= STANDARD_HEADERS
 
-  response = response_handler(endpoint, exclusive_headers)
+  response = state_response_handler(endpoint, exclusive_headers)
 
   return response
