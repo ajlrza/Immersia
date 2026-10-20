@@ -1,11 +1,8 @@
 from engine.engine_dataclasses import main_dc
+import asyncio
 
 # NATIVE MODULES - OS-LEVEL
 import threading, os, multiprocessing
-
-# THIRD PARTY - KAFKA
-from kafka import KafkaConsumer, KafkaProducer
-from kafka.structs import TopicPartition
 
 HARDWARE_PRIORITY = {
     "0.85": 0.85,
@@ -13,27 +10,21 @@ HARDWARE_PRIORITY = {
     "0.50": 0.50
 }
 
-OBSERVED = TopicPartition('OBSERVED', 0)
-UNOBSERVED = TopicPartition('UNOBSERVED', 0)
-MISC = TopicPartition('MISC', 0)
+# Might use NamedTuples 
+state_partitions: dict[str, list[StatePartition] | StatePartition]
+state_queue: asyncio.Queue = asyncio.Queue()
 
-MODEL_CACHE: str
+def CreateStatePartition(partition_name: str, partition_count: int = 0) -> None:
+    
+    if (partition_count != 0):
+        state_partitions[partition_name] = []
 
-producer = KafkaProducer(bootstrap_servers='localhost:9092')
-consumer = KafkaConsumer(bootstrap_servers='localhost:9092')
-consumer.assign([OBSERVED, UNOBSERVED, MISC])
-
-PID: int 
-current: object # Multiprocessing base process
-children: list[object] # List of current base processes
+        for n in range(partition_count):
+            state_partitions[partition_name].append([f"{partition_name} {n}"]) = None
+    
+    state_partitions.append(partition_name)
 
 CPU_LEVELS: set[str] = ["ONE_CORE", "MULTIPLE_CORES"]
-
-CPU_COUNT: int 
-CPU_LEVEL: str | None 
-
-CPU_ACTIVE: bool 
-GPU_ACTIVE: bool 
 
 ResourcePool: object
 
@@ -65,6 +56,17 @@ def CpuStatsConfigurator() -> bool:
     return True
 
 
+class Producer():
+
+    __slots__=('')
+
+    def __init__():
+        pass
+
+    async def send(partition_name, data):
+        added_to_queue = await state_queue.put(state_partitions[partition_name].append(data))
+
+
 # OS-level, RAW IMPLEMENTATION IN PYTHON
 
 ## Entity-Data Actor: ResourcePoolManager
@@ -83,28 +85,25 @@ def BeginPooling():
 
 ## Functions to send to Kafka Topics depending on the resource pool manager
 
-producer.init_transactions()
-
-def SendBackgroundStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
-
-    producer.begin_transaction()
-    sent_state_data = producer.send('UNOBSERVED', payload)
-    producer.commit_transaction()
-
-    return sent_state_data
+produce = Producer()
 
 def SendMainStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
 
-    producer.begin_transaction()
-    sent_state_data = producer.send('OBSERVED', payload)
-    producer.commit_transaction()
+    sent_state_data = produce.send('OBSERVED', payload)
+    produce.commit_transaction()
+
+    return sent_state_data
+
+def SendBackgroundStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
+
+    sent_state_data = produce.send('UNOBSERVED', payload)
+    produce.commit_transaction()
 
     return sent_state_data
 
 def SendMiscStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
 
-    producer.begin_transaction()
-    sent_state_data = producer.send('MISC', payload)
-    producer.commit_transaction()
+    sent_state_data = produce.send('MISC', payload)
+    produce.commit_transaction()
 
     return sent_state_data

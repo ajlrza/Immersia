@@ -15,6 +15,12 @@ WORLD_BUILD_TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwor
 WORLD_PROGRESS_TOON_TEMPLATE = "->compressworldusing->generalstate:str[state1,2,3]mcavatarstate:str[emotion1,2,3],mcpositionstate:float[x,y,z],worldstate->[events->variables]"  
 STANDARD_HEADERS = {'Content-Type': 'application/json'}
 
+def schema_adapter():
+    
+    
+
+    pass
+
 def dynamic_state_gen(keys_name: list[str], vals_hints: list[str]):
   '''
     A dynamic state generator, used for a custom

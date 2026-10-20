@@ -2,6 +2,29 @@ from typing import Any
 from engine.llm_router import llm
 from engine_dataclasses.main_dc import (ContextWindow, OperationStatus, APIConfig)
 
+OAI_SCHEMA_COMPATIBLE: set(APICOnfig) = (
+    OPENAI, 
+    AZUREOAI, 
+    GROQ, 
+    TOGETHER, 
+    OPENROUTER, 
+    PERPLEXITY, 
+    MISTRAL, 
+    DEEPINFRA, 
+    HF)
+
+
+GENERAL_SCHEMA = {
+  "payload": {
+    "messages": [{"role": "", "content": ""}],
+    "temperature": 0.0,
+    "max_tokens": 0
+  }
+}
+
+SCHEMA_KEYWORDS = ["max", "chat"]
+
+
 OPENAI: APIConfig = {
     'Call': llm.openai_call,
     'Window': ContextWindow, # Free - 128,000 
