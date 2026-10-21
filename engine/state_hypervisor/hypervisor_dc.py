@@ -1,13 +1,14 @@
 from _typeshed import Incomplete
 from typing import NamedTuple
+from dataclasses import dataclass
 
 class WorldPartition(NamedTuple):
     world: str
     partition: int
 
-class StatePartition(NamedTuple):
-    state: str
-    partition: str
+@dataclass
+class StatePartition(slots=True):
+    partition: list[dataclass] | dataclass
 
 class VisorMetadata(NamedTuple):
     states_handled: int
@@ -15,10 +16,8 @@ class VisorMetadata(NamedTuple):
 
 class PartitionMetadata(NamedTuple):
     topic: str
-    partition: int
-    leader: int
+    offset: int
     leader_epoch: int | None
-    replicas: list[int]
     replicas: list[int]
 
 class StateMemberInformation(NamedTuple):
@@ -35,3 +34,4 @@ class RetryOptions(NamedTuple):
     limit: int
     backoff_ms: int
     retry_on_timeouts: bool
+

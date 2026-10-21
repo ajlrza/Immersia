@@ -1,4 +1,5 @@
 from engine.engine_dataclasses import main_dc
+from engine.state_hypervisor.hypervisor_dc import StatePartition
 import asyncio
 
 # NATIVE MODULES - OS-LEVEL
@@ -10,23 +11,13 @@ HARDWARE_PRIORITY = {
     "0.50": 0.50
 }
 
-# Might use NamedTuples 
-state_partitions: dict[str, list[StatePartition] | StatePartition]
-state_queue: asyncio.Queue = asyncio.Queue()
-
-def CreateStatePartition(partition_name: str, partition_count: int = 0) -> None:
-    
-    if (partition_count != 0):
-        state_partitions[partition_name] = []
-
-        for n in range(partition_count):
-            state_partitions[partition_name].append([f"{partition_name} {n}"]) = None
-    
-    state_partitions.append(partition_name)
-
 CPU_LEVELS: set[str] = ["ONE_CORE", "MULTIPLE_CORES"]
 
 ResourcePool: object
+
+# Might use NamedTuples 
+state_partitions: StatePartition = StatePartition()
+state_broker: asyncio.Queue = asyncio.Queue()
 
 def CpuStatsConfigurator() -> bool:
 
@@ -56,6 +47,21 @@ def CpuStatsConfigurator() -> bool:
     return True
 
 
+def CreateStatePartition(partition_name: str, partition_count: int = 0) -> None:
+    
+    if (partition_count != 0):
+        state_partitions.partition = []
+
+        for n in range(partition_count):
+            state_partitions.partition.append([f"{partition_name} {n}"]) = None
+    
+    state_partitions.partition.append(partition_name)
+
+def PushStateQueue():
+
+    with open('.txt', 'w') as file:
+        file.write(state_broker.get())
+
 class Producer():
 
     __slots__=('')
@@ -64,7 +70,7 @@ class Producer():
         pass
 
     async def send(partition_name, data):
-        added_to_queue = await state_queue.put(state_partitions[partition_name].append(data))
+        added_to_queue = await state_broker.put(state_partitions.partition.append(data))
 
 
 # OS-level, RAW IMPLEMENTATION IN PYTHON
