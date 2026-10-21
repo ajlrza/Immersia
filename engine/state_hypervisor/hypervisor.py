@@ -1,5 +1,6 @@
-from engine.engine_dataclasses import main_dc
-from engine.state_hypervisor.hypervisor_dc import StatePartition
+from engine.state_dataclasses import main_dc
+from typing import NamedTuple, Literal
+import resource, sys, multiprocessing, time
 import asyncio
 
 # NATIVE MODULES - OS-LEVEL
@@ -12,12 +13,22 @@ HARDWARE_PRIORITY = {
 }
 
 CPU_LEVELS: set[str] = ["ONE_CORE", "MULTIPLE_CORES"]
+STATE_PARTITION_POOL_PATH: str = "/partition/"
+BUFFER_CLEARANCE_COUNT = 50
 
-ResourcePool: object
+class state_partition(NamedTuple):
+    partition_name: str
+    partition_priority: Literal["HIGH", "MEDIUM", "LOW"]
+    partition_data: list[main_dc.EnginePayload, main_dc.PerfPayload]
+    partition_status: Literal["UP", "DOWN"]
 
-# Might use NamedTuples 
-state_partitions: StatePartition = StatePartition()
-state_broker: asyncio.Queue = asyncio.Queue()
+class state_partition_info(NamedTuple):
+    active_partitions: list[state_partition]
+    partition_count: int
+
+state_hypervisor_buffer: asyncio.Queue = asyncio.Queue(maxsize=100)
+state_partition_pool: dict[str, state_partition] 
+partition_central_management: state_partition_info = state_partition_info()
 
 def CpuStatsConfigurator() -> bool:
 
@@ -46,70 +57,86 @@ def CpuStatsConfigurator() -> bool:
 
     return True
 
-
 def CreateStatePartition(partition_name: str, partition_count: int = 0) -> None:
-    
-    if (partition_count != 0):
-        state_partitions.partition = []
 
-        for n in range(partition_count):
-            state_partitions.partition.append([f"{partition_name} {n}"]) = None
-    
-    state_partitions.partition.append(partition_name)
+    partition = state_partition()
+    partition.partition_name = partition_name
+    partition_central_management.partition_count = partition_count
 
-def PushStateQueue():
+def SendToPartition(partition_name, data):
 
-    with open('.txt', 'w') as file:
-        file.write(state_broker.get())
+    with open(f'{STATE_PARTITION_POOL_PATH}/{partition_name}.txt', 'w') as file:
+        file.write(data)
 
-class Producer():
+    partition_central_management.partition_count += 1
 
-    __slots__=('')
+def EnqueueStateData(partition_name, data):
 
-    def __init__():
-        pass
+    sent_to_queue = state_hypervisor_buffer.put(SendToPartition(partition_name, data))
+    return sent_to_queue
 
-    async def send(partition_name, data):
-        added_to_queue = await state_broker.put(state_partitions.partition.append(data))
+async def DequeueForSending() -> bool:
 
+    current_queue_count = state_hypervisor_buffer.qsize()
 
-# OS-level, RAW IMPLEMENTATION IN PYTHON
+    current_partition_executed = await state_hypervisor_buffer.get()
+    await current_partition_executed
 
-## Entity-Data Actor: ResourcePoolManager
-def ResourcePoolManager(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
-    pass
+    state_hypervisor_buffer.task_done()
 
-## Functions to initiate resources pool
-def BeginPooling():
-    pass
-
-## Functions to take control of the resources pool
-
-## Functions to standardize resources pool 
-
-## Functions to create, delete,store, and change resources pool
-
-## Functions to send to Kafka Topics depending on the resource pool manager
-
-produce = Producer()
+    if (current_queue_count - 1 == state_hypervisor_buffer.qsize()):
+        partition_central_management.partition_count -= 1
+        return True
+    else:
+        return False
 
 def SendMainStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
 
-    sent_state_data = produce.send('OBSERVED', payload)
-    produce.commit_transaction()
-
+    sent_state_data = EnqueueStateData('OBSERVED', payload)
     return sent_state_data
 
 def SendBackgroundStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
 
-    sent_state_data = produce.send('UNOBSERVED', payload)
-    produce.commit_transaction()
-
+    sent_state_data = EnqueueStateData('UNOBSERVED', payload)
     return sent_state_data
 
 def SendMiscStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
 
-    sent_state_data = produce.send('MISC', payload)
-    produce.commit_transaction()
-
+    sent_state_data = EnqueueStateData('MISC', payload)
     return sent_state_data
+
+async def Hypervisor():
+
+    global buffer_clearance_count
+
+    while (state_hypervisor_buffer.empty() == False):
+      dequeuing = await DequeueForSending() 
+      buffer_clearance_count -= 1
+
+    if (buffer_clearance_count != 0):
+        print("Remaining count uncleared: " + buffer_clearance_count)
+        return
+
+def DistributeLoadPartition(partition: str | list[str]):
+
+    got_partition: state_partition = None
+
+    print("Distributing load...")
+
+    if (partition_central_management.partition_count % 2 == 0):
+        print("Symmetric partition count detected... Distributing the load evenly..")
+
+        if (isinstance(partition, list[str])):
+            for parti in partition:
+            
+                match (state_partition_pool[parti].partition_priority):
+                    case "HIGH":
+                        pass
+                    case "MEDIUM":
+                        pass
+                    case "LOW":
+                        pass
+
+        elif (isinstance(partition, list[str])):
+            got_partition = state_partition_pool[partition]
+
