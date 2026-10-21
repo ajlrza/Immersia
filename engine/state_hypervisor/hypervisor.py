@@ -1,16 +1,10 @@
 from engine.state_dataclasses import main_dc
+from contextlib import contextmanager
 from typing import NamedTuple, Literal
-import resource, sys, multiprocessing, time
-import asyncio
+from collections import abc
 
 # NATIVE MODULES - OS-LEVEL
-import threading, os, multiprocessing
-
-HARDWARE_PRIORITY = {
-    "0.85": 0.85,
-    "0.70": 0.70,
-    "0.50": 0.50
-}
+import threading, os, multiprocessing, resource, sys, multiprocessing, time, asyncio
 
 CPU_LEVELS: set[str] = ["ONE_CORE", "MULTIPLE_CORES"]
 STATE_PARTITION_POOL_PATH: str = "/partition/"
@@ -105,6 +99,7 @@ def SendMiscStates(payload: list[main_dc.EnginePayload, main_dc.PerfPayload]):
     sent_state_data = EnqueueStateData('MISC', payload)
     return sent_state_data
 
+@contextmanager
 async def Hypervisor():
 
     global buffer_clearance_count
@@ -117,6 +112,7 @@ async def Hypervisor():
         print("Remaining count uncleared: " + buffer_clearance_count)
         return
 
+@contextmanager
 def DistributeLoadPartition(partition: str | list[str]):
 
     got_partition: state_partition = None
@@ -140,3 +136,5 @@ def DistributeLoadPartition(partition: str | list[str]):
         elif (isinstance(partition, list[str])):
             got_partition = state_partition_pool[partition]
 
+
+def BytesComputer(payload_bytes: Byte)

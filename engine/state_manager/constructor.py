@@ -75,7 +75,6 @@ def StateWriter(
 
     return True
 
-
 # CONTEXT ASSEMBLERS TO FEED LLM IN GENERATING STATES
 # USES B-TREE DATA STRUCTURE
 
@@ -108,7 +107,6 @@ def position_state_assemble(tree_id: int | list[int]):
         Contains description of spatial address of characters in the 
         digital world.
     '''
-
 
 
 # World State Components Assembly
