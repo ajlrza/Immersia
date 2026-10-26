@@ -1,6 +1,6 @@
 # ENGINE MODULES
 from llm_router.storage import store
-from engine_dataclasses import main_dc
+from engine.state_dataclasses import main_dc
 from engine import main
 
 # NATIVE MODULES - TYPES 
@@ -11,7 +11,7 @@ from collections.abc import Callable
 import orjson, threading, asyncio
 
 # NATIVE MODULES - NETWORK
-import requests, websockets, base64, os
+import requests, websocket, base64, os
 
 # THIRD PARTY MODULES - HF
 from transformers import AutoTokenizer, TokenizersBackend, SentencePieceBackend
@@ -25,7 +25,7 @@ CONFIG_KEYS: set[str] = ['ContextWindow', 'OperationStatus', 'RPM', 'PREFIX']
 # If Router Status is Routed, we're done and clear result data
 
 lock = asyncio.Lock()
-RouterStatus: main_dc.RouterStatus 
+RouterQueue: asyncio.Queue = asyncio.Queue()
 
 async def UpdateRouterStatus(status: str = None, layer: str = None) -> bool:
 
@@ -35,27 +35,29 @@ async def UpdateRouterStatus(status: str = None, layer: str = None) -> bool:
 
     await lock.acquire()
 
-    global RouterStatus
-
     try:
+
+        global RouterQueue
+        RouterStatus: main_dc.RouterStatus = main_dc.RouterStatus()
 
         if (status and layer):
 
-            RouterStatus.Status = status
-            RouterStatus.Layer = layer
+            await RouterQueue.put(
+                {"Status": status, "Layer": layer}
+            )
 
         elif (not layer and status):
             
-            RouterStatus.Status = status
+            await RouterQueue.put({"Status": status})
 
         elif (not status and layer):
 
-            RouterStatus.Layer = layer
+            await RouterQueue.put({"Layer": layer})
 
     except Exception as e:
-        print(e)
-        lock.release()
         assert e
+        lock.release()
+        return False
 
     lock.release()
     return True
@@ -68,27 +70,50 @@ async def ReadRouterStatus(status: str = None, layer: str = None) -> bool:
 
     await lock.acquire()
 
-    global RouterStatus
+    global RouterQueue
 
-    try:
+    if (status and layer):
 
-        if (status and layer):
+        current_router_queue: dict[str, str] = await RouterQueue.get()
 
-            assert status == RouterStatus.Status
-            assert layer == RouterStatus.Layer
+        try:
 
-        elif (not layer and status):
-            
-            assert status == RouterStatus.Status
-            
-        elif (not status and layer):
+            assert current_router_queue['Status'] == status
+            assert current_router_queue['Layer'] == layer
 
-            assert layer == RouterStatus.Layer
+            RouterQueue.task_done()
 
-    except Exception as e:
-        print(e)
-        lock.release()
-        return False
+        except:
+            print(f"Current Router Status: {current_router_queue['Status']}, Current Router Layer: {current_router_queue['Layer']}" )
+            lock.release()
+            return False
+
+    elif (not layer and status):
+        
+        try:
+
+            assert current_router_queue['Status'] == status
+
+            RouterQueue.task_done()
+
+        except:
+            print(f"Current Router Status: {current_router_queue['Status']}")
+            lock.release()
+            return False
+        
+    elif (not status and layer):
+
+        try:
+
+            assert current_router_queue['Layer'] == layer
+
+            RouterQueue.task_done()
+
+        except:
+            print(f"Current Router Layer: {current_router_queue['Layer']}")
+            lock.release()
+            return False
+
 
     lock.release()
     return True
@@ -197,7 +222,7 @@ def CatalogCheck(paramToCheck: str, optParamToCheck: str = None) -> typing.Any |
         return None
 
 url = "https://github.com"
-headers = {"Authorization": os.getenv("API_CALLER_TOKEN")} 
+headers = {"Authorization": os.getenv("API_CALLER_KEY")} 
 
 async def CheckAPI(model: str = None) -> typing.Literal['UP', 'DOWN']:
 
@@ -323,10 +348,12 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
         await UpdateRouterStatus(layer='BROADCAST')
         return Broadcast
 
-    if (RouterStatus.Status == "ROUTING"):
+    if (ReadRouterStatus(status='ROUTING') and not ReadRouterStatus(layer='RESPONSE')):
         return False
-    elif (RouterStatus.Status == "NOT ROUTING" and RouterStatus.Layer not in {"UPDATE", "LOAD", "API"}):
-        RouterStatus.Status = "ROUTING"
+    elif (ReadRouterStatus(status='ROUTING') and ReadRouterStatus(layer='RESPONSE')):
+        await UpdateRouterStatus(status='ROUTED')
+    elif (ReadRouterStatus(status='NOT ROUTING') and ReadRouterStatus(status=None, layer=None) not in {"UPDATE", "LOAD", "API"}):
+        await UpdateRouterStatus(status='ROUTING')
     
     if isinstance(key, str) and isinstance(model, str):
 
@@ -339,18 +366,29 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             assert isinstance(checkBoth, list) == True, "Model configuration does not exist"
             assert all(isinstance(catalog, object) for catalog in checkBoth) == True, "Listed catalog is not an object"
 
-            checkedForAPI = CheckAPI(checkBoth[0])
+            checked_for_api = asyncio.create_task(CheckAPI(checkBoth[0], checkBoth[1]))
+            checked: any | None = None 
 
-            if (checkedForAPI == 'UP'):
-                return CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT)
-            elif (checkedForAPI == 'DOWN'):
-                return Broadcast
+            if (checked_for_api.done):
+                try:
+                    checked = checked_for_api.result()
+                except Exception as e:
+                    return e
 
-            checkedForAPI = CheckAPI(checkBoth[0], checkBoth[1])
+            checked = checked_for_api.result()
 
-            if (checkedForAPI == 'UP'):
-                return CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT)
-            elif (checkedForAPI == 'DOWN'):
+            if (checked == 'UP'):
+
+                called_api = asyncio.create_task(CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT))
+
+                if (called_api.done()):
+                    try:
+                        assert isinstance(called_api.result(), main_dc.EnginePayload) == True
+                        return called_api.result()
+                    except Exception as e:
+                        assert e
+
+            elif (checked == 'DOWN'):
                 return Broadcast
 
         except AssertionError as e:
@@ -365,14 +403,29 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
         if checkKey:
 
             await UpdateRouterStatus(layer='API')
-            checkedForAPI = CheckAPI(checkKey)
+            checked_for_api = asyncio.create_task(CheckAPI(checkKey))
+            checked: any | None = None 
 
-            if (checkedForAPI == 'UP'):
-                return CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT)
-            elif (checkedForAPI == 'DOWN'):
+            if (checked_for_api.done):
+                try:
+                    checked = checked_for_api.result()
+                except Exception as e:
+                    return e
+
+            checked = checked_for_api.result()
+
+            if (checked == 'UP'):
+                called_api = asyncio.create_task(CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT))
+                if (called_api.done):
+                    try:
+                        assert isinstance(called_api.result(), main_dc.EnginePayload) == True
+                        return called_api.result()
+                    except Exception as e:
+                        return e
+            elif (checked == 'DOWN'):
                 return Broadcast
             
-def Router(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> main_dc.EnginePayload:
+async def Router(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> main_dc.EnginePayload:
 
     # Check for router status first
 
@@ -381,12 +434,12 @@ def Router(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> main_dc.En
         # avoid race condition
 
     elif ReadRouterStatus(layer='ROUTED'):
-        RouterStatus.Status = "NOT ROUTING"
+        await UpdateRouterStatus(status='NOT ROUTING')
     
     RoutedRequest: main_dc.EnginePayload | types.Callable = None
 
     if (Payload.Prompt):
-        RoutedRequest: main_dc.EnginePayload | types.Callable = Route(Payload.Key or Payload.Model)
+        RoutedRequest: main_dc.EnginePayload | types.Callable = await Route(Payload.Key or Payload.Model)
 
         if isinstance(RoutedRequest, types.Callable):
             BroadcastedRequest = RoutedRequest(Payload)
