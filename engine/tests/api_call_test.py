@@ -3,7 +3,7 @@ from google import genai
 
 # Initial test, uses gemini for conveniency
 def test_api_gemini_call(message: str):
-    key = os.environ.get("KEY")
+    key = os.environ.get("API_CALLER_KEY")
 
     client = genai.Client(api_key=key)
     chat = client.chats.create(model='gemini-2.0-flash')
