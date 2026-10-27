@@ -11,7 +11,7 @@ from collections.abc import Callable
 import orjson, threading, asyncio
 
 # NATIVE MODULES - NETWORK
-import requests, websocket, base64, os
+import requests, websockets, base64, os
 
 # THIRD PARTY MODULES - HF
 from transformers import AutoTokenizer, TokenizersBackend, SentencePieceBackend
@@ -342,7 +342,7 @@ def Broadcast(Payload: main_dc.PromptPayload):
 
 async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | types.Callable:
 
-    if isinstance(key, types.NoneType) and isinstance(key, types.NoneType):
+    if isinstance(key, types.NoneType) and isinstance(model, types.NoneType):
         
         # Let's see which model can handle instead
         await UpdateRouterStatus(layer='BROADCAST')
@@ -395,7 +395,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             print(str(e) + ", searching on huggingface... ")
 
 
-    elif key and not model:
+    elif isinstance(key, str) and isinstance(model, types.NoneType):
         
         await UpdateRouterStatus(layer='CHECK')
         checkKey = CatalogCheck(key)
@@ -407,6 +407,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             checked: any | None = None 
 
             if (checked_for_api.done):
+
                 try:
                     checked = checked_for_api.result()
                 except Exception as e:
@@ -416,30 +417,35 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
 
             if (checked == 'UP'):
                 called_api = asyncio.create_task(CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT))
+                
                 if (called_api.done):
+
                     try:
                         assert isinstance(called_api.result(), main_dc.EnginePayload) == True
                         return called_api.result()
+
                     except Exception as e:
                         return e
+
             elif (checked == 'DOWN'):
                 return Broadcast
             
 async def Router(Payload: main_dc.EnginePayload | main_dc.PromptPayload) -> main_dc.EnginePayload:
 
     # Check for router status first
+    status_check_routing = await ReadRouterStatus(layer='ROUTING')
+    status_check_routed = await ReadRouterStatus(layer='ROUTED')
 
-    if ReadRouterStatus(layer='ROUTING'):
+    if status_check_routing:
         return False 
-        # avoid race condition
 
-    elif ReadRouterStatus(layer='ROUTED'):
+    elif status_check_routed:
         await UpdateRouterStatus(status='NOT ROUTING')
     
     RoutedRequest: main_dc.EnginePayload | types.Callable = None
 
     if (Payload.Prompt):
-        RoutedRequest: main_dc.EnginePayload | types.Callable = await Route(Payload.Key or Payload.Model)
+        RoutedRequest: main_dc.EnginePayload | types.Callable = await Route(Payload.Key or None, Payload.Model or None)
 
         if isinstance(RoutedRequest, types.Callable):
             BroadcastedRequest = RoutedRequest(Payload)
