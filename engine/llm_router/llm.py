@@ -4,8 +4,8 @@ from huggingface_hub import HfApi
 from huggingface_hub import login, DeviceCodeError
 
 # ENGINE MODULE
-from engine_dataclasses.main_dc import (EnginePayload, PromptPayload)
-from engine.llm.state_construction import constructor
+from engine.state_dataclasses import (EnginePayload, PromptPayload)
+from engine.state_manager import constructor
 
 # thinking of getting inspiration from IPv6 neighbor solicit and broadcasting
 
@@ -15,9 +15,51 @@ WORLD_BUILD_TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwor
 WORLD_PROGRESS_TOON_TEMPLATE = "->compressworldusing->generalstate:str[state1,2,3]mcavatarstate:str[emotion1,2,3],mcpositionstate:float[x,y,z],worldstate->[events->variables]"  
 STANDARD_HEADERS = {'Content-Type': 'application/json'}
 
-def schema_adapter():
+#WIP
+def schema_adapter(request_response: dict[str, any]):
     
+    usual_content_key_names: set[str] = {
+      "content",  # OpenAI, Anthropic, Mistral, Groq, Together AI, Perplexity
+      "text",  # Google Gemini, Cohere, Anthropic (legacy v1), AWS Bedrock
+      "completion",  # Anthropic (legacy completion API), AI21
+      "generation",  # Cohere (legacy generation API)
+      "output",  # Replicate, Hugging Face TGI
+    }
+ 
+    response_keys = list(request_response.keys())
+
+    for usual_key in usual_content_key_names:
+      if usual_key in response_keys:
+         return request_response[usual_key]
     
+    key_pointer_one = 0
+    key_pointer_two = len(response_keys) - 1
+
+    current_longest_kv_len =  0
+    current_longest_kv_item = None
+
+    while (key_pointer_one < key_pointer_two):
+
+      value = None
+
+      if (len(request_response[response_keys[key_pointer_one]] == request_response[response_keys[key_pointer_two]])):
+        if (request_response[response_keys[key_pointer_one]] in usual_content_key_names):
+          return request_response[response_keys[key_pointer_one]]
+        elif (request_response[response_keys[key_pointer_two]] in usual_content_key_names):
+          return request_response[response_keys[key_pointer_two]]
+        else:
+          continue
+
+      if (len(request_response[response_keys[key_pointer_one]]) > current_longest_kv_len):
+         continue
+      elif (len(request_response[response_keys[key_pointer_one]]) < current_longest_kv_len):
+         current_longest_kv_len = len(request_response[response_keys[key_pointer_one]])
+         current_longest_kv_item = request_response[response_keys[key_pointer_one]]
+      elif (len(request_response[response_keys[key_pointer_two]]) > current_longest_kv_len):
+          continue
+      elif (len(request_response[response_keys[key_pointer_two]] < current_longest_kv_len)):
+         current_longest_kv_len = len(request_response[response_keys[key_pointer_two]])
+         current_longest_kv_item = request_response[response_keys[key_pointer_two]]
 
     pass
 
