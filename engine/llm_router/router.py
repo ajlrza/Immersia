@@ -174,15 +174,17 @@ async def UpdateJSONStore(Config: str, Value: str, Model: str = None) -> bool:
                 return True
 
         except orjson.JSONDecodeError:
-            raise orjson.JSONDecodeError
+            # dump in a file to be manually updated instead
+            print(orjson.JSONDecodeError)
 
     return None
 
 async def UpdatePyStore(Config: str, Value: str, Model: str = None) -> bool | orjson.JSONDecodeError | AssertionError:
 
-    if Config in CONFIG_KEYS and Model:
+    if Config not in CONFIG_KEYS:
+        raise AssertionError("Config Key does not exist")
 
-        await UpdateRouterStatus(status='NOT ROUTING', layer='UPDATE')
+    if Config in CONFIG_KEYS and Model:
 
         setattr(store, Model, Value)
         updatedConfig = getattr(store, Model, None)
@@ -192,16 +194,25 @@ async def UpdatePyStore(Config: str, Value: str, Model: str = None) -> bool | or
             DoJSONNext = UpdateJSONStore(Config, Value, Model)
 
             if (DoJSONNext):
-                UpdateRouterStatus(layer='NONE')
-                lock.release()
                 return True
   
         else:
-            await UpdateRouterStatus(layer='NONE')
+            # dump the log somewhere the human can manually do IG
             raise AssertionError("Config was not updated in .py file")
-    else:
-        await UpdateRouterStatus(layer='NONE')
-        raise AssertionError("Config Key does not exist")
+    
+    setattr(store, Config, Value)
+    updatedConfig = getattr(store, Config, None)
+    
+    if updatedConfig.__getattribute__(Config) == Config:
+
+        DoJSONNext = UpdateJSONStore(Config, Value, Model)
+
+        if (DoJSONNext):
+            return True
+    
+        else:
+            # dump the log somewhere the human can manually do IG
+            raise AssertionError("Config was not updated in .py file")
 
 def CatalogCheck(paramToCheck: str, optParamToCheck: str = None) -> typing.Any | None | list[typing.Any | None]:
     
@@ -254,16 +265,22 @@ async def CallAPI(model: str, endpoint: str) -> main_dc.EnginePayload:
             data = response.content.decode()
             new_endpoint = data.rfind(matching)
 
-            if (isinstance(new_endpoint)):
+            if (isinstance(new_endpoint, int)):
                 endpoint: str = new_endpoint
 
-                updated_endpoint:  bool | orjson.JSONDecodeError | AssertionError = UpdatePyStore(
-                    Config='Endpoint',
-                    Value=endpoint,
-                    Model=model
+                updated_endpoint: asyncio.Task = asyncio.create_task(
+                    UpdatePyStore(
+                        Config='Endpoint',
+                        Value=endpoint,
+                        Model=model
+                    )
                 )
+                endpoint_result: bool | orjson.JSONDecodeError | AssertionError = await updated_endpoint
 
-                if (updated_endpoint):
+                if (updated_endpoint.done()):
+                    endpoint_result: bool | orjson.JSONDecodeError | AssertionError = updated_endpoint.result()
+
+                if (endpoint_result):
                     print("Successfully updated new endpoint")
                 else:
                     print("Cannot update new endpoint, saving new endpoint to cache and saved later.")
@@ -339,7 +356,6 @@ def Broadcast(Payload: main_dc.PromptPayload):
 
     sent_broadcast = BroadcastMessage(Payload.Model, token_length)
     
-
 async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | types.Callable:
 
     if isinstance(key, types.NoneType) and isinstance(model, types.NoneType):
@@ -369,7 +385,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             checked_for_api = asyncio.create_task(CheckAPI(checkBoth[0], checkBoth[1]))
             checked: any | None = None 
 
-            if (checked_for_api.done):
+            if (checked_for_api.done()):
                 try:
                     checked = checked_for_api.result()
                 except Exception as e:
@@ -406,7 +422,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             checked_for_api = asyncio.create_task(CheckAPI(checkKey))
             checked: any | None = None 
 
-            if (checked_for_api.done):
+            if (checked_for_api.done()):
 
                 try:
                     checked = checked_for_api.result()
@@ -418,7 +434,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             if (checked == 'UP'):
                 called_api = asyncio.create_task(CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT))
                 
-                if (called_api.done):
+                if (called_api.done()):
 
                     try:
                         assert isinstance(called_api.result(), main_dc.EnginePayload) == True
