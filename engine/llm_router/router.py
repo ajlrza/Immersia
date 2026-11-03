@@ -14,7 +14,7 @@ import orjson, threading, asyncio
 import requests, websockets, base64, os
 
 # THIRD PARTY MODULES - HF
-from transformers import AutoTokenizer, TokenizersBackend, SentencePieceBackend
+from transformers import AutoTokenizer, TokenizersBackend, SentencePieceBackend, AutoModelForCausalLM
 
 UNIVERSAL_ENDPOINT = "/v1/chat/completions"
 STORE_PATH = "/storage/store.json"
@@ -71,10 +71,9 @@ async def ReadRouterStatus(status: str = None, layer: str = None) -> bool:
     await lock.acquire()
 
     global RouterQueue
+    current_router_queue: dict[str, str] = await RouterQueue.get()
 
     if (status and layer):
-
-        current_router_queue: dict[str, str] = await RouterQueue.get()
 
         try:
 
@@ -118,8 +117,9 @@ async def ReadRouterStatus(status: str = None, layer: str = None) -> bool:
     lock.release()
     return True
 
-def ModelValidator(Model: str) -> TokenizersBackend | SentencePieceBackend:
+async def ModelValidator(Model: str) -> TokenizersBackend | SentencePieceBackend:
     Tokenizer: any
+    Model: any
 
     if (isinstance(Model, str) and Model.split(" ")):
         Model = Model.replace(" ", "-")
@@ -133,15 +133,32 @@ def ModelValidator(Model: str) -> TokenizersBackend | SentencePieceBackend:
 
             if (AutoTokenizer.from_pretrained(Model)):
                 Tokenizer = AutoTokenizer.from_pretrained(Model)
+                Model = AutoModelForCausalLM.from_pretrained(Model)
 
         except Exception as e:
             print(e)
-            print("Error, Model may be unknown or custom, please input the access credential")
-            # Make sure we can support any if they allow us to
+            import getpass
+            custom_model: asyncio.Task = asyncio.create_task(getpass.getpass("Error, Model may be unknown or custom, please input the config. If no need, enter N."))
+            print("Waiting for queue...")
+            if (custom_model.done()):
+                while (not isinstance(custom_model, str)):
+                    print("Invalid input.")
+                    print("Waiting for queue...")
+                    custom_model: str = asyncio.create_task(getpass.getpass("Error, Model may be unknown or custom, please input the config. If no need, enter N."))
+
+                if (custom_model == 'N'):
+                    custom_model_api_endpoint: str = getpass.getpass("Enter endpoint.")
+                    updated_store_memory = UpdatePyStore("Endpoint", custom_model_api_endpoint, "CUSTOM")
+
+                updated_store_memory = UpdatePyStore("Key", dict(custom_model)['key'], "CUSTOM")
+                updated_store_memory = UpdatePyStore("Endpoint", dict(custom_model)['endpoint'], "CUSTOM")
+                
+
 
     Tokenizer = AutoTokenizer.from_pretrained(Model)
+    Model = AutoModelForCausalLM.from_pretrained(Model)
     
-    return Tokenizer
+    return (Tokenizer, Model)
 
 class CatalogChecker:
 
@@ -162,46 +179,57 @@ catalogChecker = CatalogChecker()
 
 PROVIDER_CONFIG: any = None
 
-async def UpdateJSONStore(Config: str, Value: str, Model: str = None) -> bool:
+async def _UpdateJSONStore(Config: str, Value: str, Model: str = None, Async: bool = True) -> bool:
 
     if os.path.exists(STORE_PATH):
         try:
 
             with open(STORE_PATH, 'w') as JSONStore:
 
-                PROVIDER_CONFIG = orjson.loads(JSONStore)
+                PROVIDER_CONFIG = orjson.loads(JSONStore.read())
                 
                 return True
 
         except orjson.JSONDecodeError:
-            raise orjson.JSONDecodeError
+            # dump in a file to be manually updated instead
+            print(orjson.JSONDecodeError)
 
     return None
 
-async def UpdatePyStore(Config: str, Value: str, Model: str = None) -> bool | orjson.JSONDecodeError | AssertionError:
+def UpdatePyStore(Config: str, Value: str, Model: str = None) -> bool | orjson.JSONDecodeError | AssertionError:
+
+    if Config not in CONFIG_KEYS:
+        raise AssertionError("Config Key does not exist")
 
     if Config in CONFIG_KEYS and Model:
-
-        await UpdateRouterStatus(status='NOT ROUTING', layer='UPDATE')
 
         setattr(store, Model, Value)
         updatedConfig = getattr(store, Model, None)
         
         if updatedConfig.__getattribute__(Config) == Config:
 
-            DoJSONNext = UpdateJSONStore(Config, Value, Model)
+            DoJSONNext = _UpdateJSONStore(Config, Value, Model)
 
             if (DoJSONNext):
-                UpdateRouterStatus(layer='NONE')
-                lock.release()
                 return True
   
         else:
-            await UpdateRouterStatus(layer='NONE')
+            # dump the log somewhere the human can manually do IG
             raise AssertionError("Config was not updated in .py file")
-    else:
-        await UpdateRouterStatus(layer='NONE')
-        raise AssertionError("Config Key does not exist")
+    
+    setattr(store, Config, Value)
+    updatedConfig = getattr(store, Config, None)
+    
+    if updatedConfig.__getattribute__(Config) == Config:
+
+        DoJSONNext = _UpdateJSONStore(Config, Value, Model)
+
+        if (DoJSONNext):
+            return True
+    
+        else:
+            # dump the log somewhere the human can manually do IG
+            raise AssertionError("Config was not updated in .py file")
 
 def CatalogCheck(paramToCheck: str, optParamToCheck: str = None) -> typing.Any | None | list[typing.Any | None]:
     
@@ -232,7 +260,7 @@ async def CheckAPI(model: str = None) -> typing.Literal['UP', 'DOWN']:
         Model = model.upper()
 
     # Checks the actual python code file
-    providerMetadataStatus = getattr(store, Model.__getattribute__('Status'), None) 
+    providerMetadataStatus = getattr(store, Model, None).__getattribute__('Status') 
 
     if providerMetadataStatus.__getattribute__('LastUpdate')  > 365:
         print("Potentially depracated AI API and Model, use at own risk.")
@@ -248,30 +276,37 @@ async def CallAPI(model: str, endpoint: str) -> main_dc.EnginePayload:
         print("Possibly invalid or outdated endpoint, sending request to check..")
 
         try:
-            response = requests.get(f"https://{model.lower}.com/docs")
+            response = requests.get(f"https://{model.lower()}.com/docs")
 
             matching = 'endpoint'
             data = response.content.decode()
             new_endpoint = data.rfind(matching)
 
-            if (isinstance(new_endpoint)):
+            if (isinstance(new_endpoint, int)):
                 endpoint: str = new_endpoint
 
-                updated_endpoint:  bool | orjson.JSONDecodeError | AssertionError = UpdatePyStore(
-                    Config='Endpoint',
-                    Value=endpoint,
-                    Model=model
+                UpdateRouterStatus(status='API', layer='UPDATE')
+                updated_endpoint: asyncio.Task = asyncio.create_task(
+                    UpdatePyStore(
+                        Config='Endpoint',
+                        Value=endpoint,
+                        Model=model
+                    )
                 )
+                endpoint_result: bool | orjson.JSONDecodeError | AssertionError = await updated_endpoint
 
-                if (updated_endpoint):
+                if (updated_endpoint.done()):
+                    endpoint_result: bool | orjson.JSONDecodeError | AssertionError = updated_endpoint.result()
+
+                if (endpoint_result):
                     print("Successfully updated new endpoint")
                 else:
                     print("Cannot update new endpoint, saving new endpoint to cache and saved later.")
             else:
-                print("Error, no new endpoint found, defaulting..")
+                print("Error, no new endpoint found.")
 
         except:
-            print("Model possibly not available, default to in-house LLM or switch to a new model.")
+            print("Model possibly not available, switch to a new model.")
 
     try:
 
@@ -280,7 +315,9 @@ async def CallAPI(model: str, endpoint: str) -> main_dc.EnginePayload:
         response = requests.get(endpoint, headers=headers)
         data = response.json()
 
-        if data.status == 200:
+        if data.status_code == 200:
+
+            await UpdateRouterStatus(layer='RESPONSE')
 
             encoded_content = data["content"]
             decoded_code = base64.b64decode(encoded_content).decode("utf-8")
@@ -339,7 +376,6 @@ def Broadcast(Payload: main_dc.PromptPayload):
 
     sent_broadcast = BroadcastMessage(Payload.Model, token_length)
     
-
 async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | types.Callable:
 
     if isinstance(key, types.NoneType) and isinstance(model, types.NoneType):
@@ -369,7 +405,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             checked_for_api = asyncio.create_task(CheckAPI(checkBoth[0], checkBoth[1]))
             checked: any | None = None 
 
-            if (checked_for_api.done):
+            if (checked_for_api.done()):
                 try:
                     checked = checked_for_api.result()
                 except Exception as e:
@@ -406,7 +442,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             checked_for_api = asyncio.create_task(CheckAPI(checkKey))
             checked: any | None = None 
 
-            if (checked_for_api.done):
+            if (checked_for_api.done()):
 
                 try:
                     checked = checked_for_api.result()
@@ -418,7 +454,7 @@ async def Route(key: str = None, model: str = None) -> main_dc.EnginePayload | t
             if (checked == 'UP'):
                 called_api = asyncio.create_task(CallAPI(endpoint="https://" + model.lower() + UNIVERSAL_ENDPOINT))
                 
-                if (called_api.done):
+                if (called_api.done()):
 
                     try:
                         assert isinstance(called_api.result(), main_dc.EnginePayload) == True
