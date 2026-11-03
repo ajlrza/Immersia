@@ -71,10 +71,9 @@ async def ReadRouterStatus(status: str = None, layer: str = None) -> bool:
     await lock.acquire()
 
     global RouterQueue
+    current_router_queue: dict[str, str] = await RouterQueue.get()
 
     if (status and layer):
-
-        current_router_queue: dict[str, str] = await RouterQueue.get()
 
         try:
 
@@ -187,7 +186,7 @@ async def _UpdateJSONStore(Config: str, Value: str, Model: str = None, Async: bo
 
             with open(STORE_PATH, 'w') as JSONStore:
 
-                PROVIDER_CONFIG = orjson.loads(JSONStore)
+                PROVIDER_CONFIG = orjson.loads(JSONStore.read())
                 
                 return True
 
@@ -261,7 +260,7 @@ async def CheckAPI(model: str = None) -> typing.Literal['UP', 'DOWN']:
         Model = model.upper()
 
     # Checks the actual python code file
-    providerMetadataStatus = getattr(store, Model.__getattribute__('Status'), None) 
+    providerMetadataStatus = getattr(store, Model, None).__getattribute__('Status') 
 
     if providerMetadataStatus.__getattribute__('LastUpdate')  > 365:
         print("Potentially depracated AI API and Model, use at own risk.")
@@ -277,7 +276,7 @@ async def CallAPI(model: str, endpoint: str) -> main_dc.EnginePayload:
         print("Possibly invalid or outdated endpoint, sending request to check..")
 
         try:
-            response = requests.get(f"https://{model.lower}.com/docs")
+            response = requests.get(f"https://{model.lower()}.com/docs")
 
             matching = 'endpoint'
             data = response.content.decode()
@@ -316,7 +315,7 @@ async def CallAPI(model: str, endpoint: str) -> main_dc.EnginePayload:
         response = requests.get(endpoint, headers=headers)
         data = response.json()
 
-        if data.status == 200:
+        if data.status_code == 200:
 
             await UpdateRouterStatus(layer='RESPONSE')
 
