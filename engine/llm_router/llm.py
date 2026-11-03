@@ -7,8 +7,6 @@ from huggingface_hub import login, DeviceCodeError
 from engine.state_dataclasses import (EnginePayload, PromptPayload)
 from engine.state_manager import constructor
 
-# thinking of getting inspiration from IPv6 neighbor solicit and broadcasting
-
 # Build a unified middleware service hosted on different soon so if errors occur it wont hit the app
 
 WORLD_BUILD_TOON_TEMPLATE = "->compressworldusing->worldtheme:[list],generalkwords:[list],charactersname:[list]ifany->worldconnect[theme,characters,keywords]"

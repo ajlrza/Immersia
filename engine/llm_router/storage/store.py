@@ -25,6 +25,8 @@ GENERAL_SCHEMA = {
 SCHEMA_KEYWORDS = ["max", "chat"]
 
 
+CUSTOM: dict[str, any] = {}
+
 OPENAI: APIConfig = {
     'Call': llm.openai_call,
     'Window': ContextWindow, # Free - 128,000 
