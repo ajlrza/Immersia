@@ -135,6 +135,3 @@ def DistributeLoadPartition(partition: str | list[str]):
 
         elif (isinstance(partition, list[str])):
             got_partition = state_partition_pool[partition]
-
-
-def BytesComputer(payload_bytes: Byte)
