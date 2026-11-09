@@ -3,7 +3,7 @@
 Immersia is a electron desktop application that brings together your ideas into a simulated, playable worlds with persistency and context management
 to enrich the experience
 
-<img width="1024" height="572" alt="image" src="https://github.com/user-attachments/assets/6f359bfb-cdc8-4af4-94a5-9c6cae1c7652" />
+<img width="1536" height="1024" alt="624aad2d-555d-4fa1-8ef3-84fd2af507d5-0" src="https://github.com/user-attachments/assets/2b9ac341-1187-421f-ad40-7e7d25a460e9" />
 
 # About
 
