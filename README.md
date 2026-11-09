@@ -1,7 +1,9 @@
 # IMMERSIA
 
-Immersia is a generative web application that brings together your ideas into a simulated, playable worlds with persistency and context management
+Immersia is a electron desktop application that brings together your ideas into a simulated, playable worlds with persistency and context management
 to enrich the experience
+
+<img width="1024" height="572" alt="image" src="https://github.com/user-attachments/assets/6f359bfb-cdc8-4af4-94a5-9c6cae1c7652" />
 
 # About
 
