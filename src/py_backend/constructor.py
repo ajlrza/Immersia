@@ -82,7 +82,7 @@ database = db.KVDatabase()
 
 # Each state assemblers may be invoked according to the resulting interactions and request
 # of the tree IDs. The states are also assembled to maintain persistency.
-# For instance, a user's recent state change may contain a tree ID that is relevant to it
+# For instance, a user's recent state change may contain a node ID that is relevant to it
 # hence the state assembler would be invoked accordingly and the results are passed on
 # to the LLM to inject contextual reasoning. But for the recent state change to contain
 # a tree ID, it would require a graph math.
