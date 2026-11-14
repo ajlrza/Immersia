@@ -22,5 +22,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["client"]
+  "include": ["client", "interfaces", "src/ts_scripts", "src/ts_model"]
 }

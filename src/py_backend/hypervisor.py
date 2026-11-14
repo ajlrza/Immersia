@@ -1,10 +1,10 @@
-from engine.state_dataclasses import main_dc
+from state_dataclasses import main_dc
 from contextlib import contextmanager
 from typing import NamedTuple, Literal
 from collections import abc
 
 # NATIVE MODULES - OS-LEVEL
-import threading, os, multiprocessing, resource, sys, multiprocessing, time, asyncio
+import threading, os, multiprocessing, resource, sys, time, asyncio
 
 CPU_LEVELS: set[str] = ["ONE_CORE", "MULTIPLE_CORES"]
 STATE_PARTITION_POOL_PATH: str = "/partition/"

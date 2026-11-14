@@ -2,6 +2,7 @@ import os
 import typing, types
 from dataclasses import dataclass, field
 from engine.engine_dataclasses import lmdb_dc
+
 @dataclass
 class PromptPayload(slots=True):
     Metadata:   object

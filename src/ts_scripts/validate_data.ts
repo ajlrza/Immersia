@@ -4,7 +4,7 @@ import type {
     generalStateExt, 
     avatarStateExt, 
     positionStateExt, 
-    worldStateExt } from '../types/state_types'
+    worldStateExt } from '../ts_model/state_types'
 import type { 
     mainValid, 
     linkerValid, 
@@ -14,7 +14,7 @@ import type {
     strStatesValid, 
     numStatesValid,
     promptValidation
-} from '../types/data_validation_types'
+} from '../ts_model/data_validation_types'
 
 type Validator = { validate: (val: unknown) => boolean };
 
@@ -158,9 +158,6 @@ export function checkExtRecord(extData: extPayload | undefined): boolean | Recor
         "worldExt": recValidate.validate(extData.worldExt.extStates)
     }
 
-    // yo ill do the onefor extState its record<string, any> validation later, for now its extObj as a whole since
-    // extData is mainData + extData record<string, any>
-
     return {
         "extObj": extObjValid,
         "extRec": extRecordsValid
@@ -189,18 +186,7 @@ export function validatePromptPayload(promptPayload: promptPayload): boolean | R
         isCharLimit: false
     }
 
-    const gibberishDetected: boolean = gibberishDetector(promptPayload.prompt);
 
     return validPrompt
-
-}
-
-// Add future advanced AST for guardrails, preventing stupid ass prompts, or any non lore prompts wasting tokens/or wasting server/engine resources
-
-
-// Implement sliding window, optimized, and 
-export function gibberishDetector(prompt: string): boolean {
-
-    return false
 
 }
