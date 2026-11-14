@@ -3,7 +3,8 @@
 Immersia is a local web application that brings together your ideas into a simulated, playable worlds with persistency and context management
 to enrich the experience
 
-<img width="1536" height="1024" alt="624aad2d-555d-4fa1-8ef3-84fd2af507d5-0" src="https://github.com/user-attachments/assets/2b9ac341-1187-421f-ad40-7e7d25a460e9" />
+<img width="1358" height="567" alt="tikz-export" src="https://github.com/user-attachments/assets/9dcc3b7d-1a5f-46f6-822a-092af64e2b18" />
+
 
 # About
 
