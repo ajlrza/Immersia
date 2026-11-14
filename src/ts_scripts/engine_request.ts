@@ -1,9 +1,9 @@
-import type { extPayload } from '../types/state_types'
-import type { extValid } from '../types/data_validation_types'
+import type { extPayload } from '../src/ts_model/state_types'
+import type { extValid } from '../src/ts_model/data_validation_types'
 import { checkMainStates, checkExtRecord, checkExtSingle } from './validate_data'
-import type { generalState, avatarState, positionState, worldState } from '../types/state_types'
-import type { spriteProperties, promptPayload, enginePayload } from '../interfaces/engine_interfaces'
-import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../types/state_types'
+import type { generalState, avatarState, positionState, worldState } from '../src/ts_model/state_types'
+import type { spriteProperties, promptPayload, enginePayload } from '../../interfaces/engine_interfaces'
+import type { generalStateExt, avatarStateExt, positionStateExt, worldStateExt } from '../src/ts_model/state_types'
 
 let sentCount: number = 0;
 
