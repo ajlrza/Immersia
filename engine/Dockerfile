@@ -1,1 +1,0 @@
-FROM python as prod-engine-py
